@@ -809,7 +809,6 @@ function parse_spdx(spdxin, mchild, input, fPid) {
       console.log(mcurrent_rowid)
       mclass = "childbom"
   }
-  spdxin = spdxin.replace(/\n\s+/g, '\n')
   khash = {}
   var lines = spdxin.split("\n")
   var components = -1;
@@ -831,7 +830,7 @@ function parse_spdx(spdxin, mchild, input, fPid) {
     /* Ignore Comments */
     if (lines[i][0] == '#')
       continue;
-    var line = lines[i].split(':')
+    var line = lines[i].trim().split(':')
     key = line.shift()
     val = line.join(":").replace(/^\s+/, '')
     if (val.indexOf("<text>") > -1) {
@@ -1161,13 +1160,13 @@ function safeXML(inText) {
     })
 }
 function safeJSON(inText) {
-    inText = inText.replace(/^\s+/,'').replace(/\s+$/,'').replace(/["]/g, '\"')
+    inText = inText.trim().replace(/["]/g, '\"')
     if(inText.toUpperCase() in DefaultEmpty) return inText.toUpperCase()
 	return inText.replace(/[\n]/g, '\\n')
 }
 function safeSPDX(inText) {
 	if (typeof inText == "undefined") return ''
-    inText = inText.replace(/^\s+/,'').replace(/\s+$/,'').replace(/["]/g, '\"')
+    inText = inText.trim().replace(/["]/g, '\"')
     if(inText.toUpperCase() in DefaultEmpty) return inText.toUpperCase()
 	if (inText.indexOf('\n') >= 0)
 		inText = "<text>\n"+inText+"\n</text>"
