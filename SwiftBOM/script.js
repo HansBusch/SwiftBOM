@@ -797,223 +797,219 @@ function do_example() {
     $('#vuls').removeClass('d-none')
 }
 var khash = {}
-function parse_spdx(spdxin,mchild,input,fPid) {
-    if(spdxin == "")
-	spdxin = $('#spdxtag').text()
-    /* This is filled if there is a childbom being inserted  with class mclass*/
-    var mcurrent_rowid = 0
-    var mclass = ""
-    if(mchild == "childbom") {
-	console.log("Trying Child bom")
-	mcurrent_rowid = parseInt($(input).closest('table').prop("id").replace("Component",""))
-	console.log(mcurrent_rowid )
-	mclass = "childbom"
+function parse_spdx(spdxin, mchild, input, fPid) {
+  if (spdxin == "")
+    spdxin = $('#spdxtag').text();
+  /* This is filled if there is a childbom being inserted  with class mclass*/
+  var mcurrent_rowid = 0
+  var mclass = ""
+  if (mchild == "childbom") {
+    console.log("Trying Child bom")
+    mcurrent_rowid = parseInt($(input).closest('table').prop("id").replace("Component", ""))
+      console.log(mcurrent_rowid)
+      mclass = "childbom"
+  }
+  spdxin = spdxin.replace(/\n\s+/g, '\n')
+  khash = {}
+  var lines = spdxin.split("\n")
+  var components = -1;
+  for (var i = 0; i < lines.length; i++) {
+    /* Bug Id: carraige returrn from Windows world can cause problems */
+    lines[i] = lines[i].replace(/\r/g, '')
+    /* Ignore Comments */
+    if (lines[i][0] == '#')
+      continue;
+    var line = lines[i].split(':')
+    var key = line.shift()
+    var val = line.join(":").replace(/^\s+/, '')
+    if (key == "Relationship") {
+      /* Modify this key to capture "relationship" matchmaking problems*/
+      if (val.indexOf("CONTAINS NO") > -1) {
+        key = "RelationshipNONE"
+          if (val.indexOf("CONTAINS NOASSERTION") > -1)
+            key = "RelationshipNOASSERTION"
+      } else if (val.indexOf("CONTAINS Document") > -1) {
+        key = "RelationshipExternal"
+      }
     }
-    spdxin = spdxin.replace(/\n\s+/g,'\n')
-    khash = {}
-    var lines = spdxin.split("\n")
-    for (var i=0; i<lines.length; i++) {
-	/* Bug Id: carraige returrn from Windows world can cause problems */
-	lines[i] = lines[i].replace(/\r/g,'')
-	/* Ignore Comments */
-	if(lines[i][0] == '#') continue;
-	var line = lines[i].split(':')
-	var key = line.shift()
-	var val =  line.join(":").replace(/^\s+/,'')
-	if(key == "Relationship") {
-	    /* Modify this key to capture "relationship" matchmaking problems*/
-	    if(val.indexOf(" CONTAINS ") < -1) {
-		key = "RelationshipUnsupported"
-	    } else if (val.indexOf("CONTAINS NO") > -1) {
-		key = "RelationshipNONE"
-		if (val.indexOf("CONTAINS NOASSERTION") > -1)
-		    key = "RelationshipNOASSERTION"
-	    } else if (val.indexOf("CONTAINS Document") >-1) {
-		key = "RelationshipExternal"
-	    }
-	}
-	key in khash ? khash[key].push(val) : khash[key] = [val]
-    }
-    /* Some data clean up and ordering */
-    if('SPDXID' in khash)     /* SPDXID is repeated collect components SPDXID*/
-	khash["CSPDXID"] = khash["SPDXID"].splice(1)
-    /* Remove <text> HTML stuff from Comment */
-    if('CreatorComment' in khash)
-	khash["CreatorComment"][0] = $('<div>').html(khash["CreatorComment"][0]).text()
-    if('Creator' in khash) {
-	var allcreators = khash['Creator'].splice(1)
-	/* Mandatory but many values allowed  but not supported
-	   khash['Creator'][0] = khash['Creator'][0] +"\n"+allcreators.join("\n")
-	*/
-	/* For this demo only use simplify this ignore all others */
-	var creatordata =  khash['Creator'][0].split(":")
-	if(creatordata.length > 1) {
-	    khash['CreatorType'] = [creatordata.shift()]
-	    khash['Creator'][0] = creatordata.join(":")
-	}else
-	    khash['CreatorType'][0] = "Organization"
-    }
-    /* Check for child SBOM if not fill the top SBOM*/
-    if(mcurrent_rowid == 0) {
-	/* Process the head as normal */
-	var headkeys = $('#main_table .thead :input').not(".has-default").not(".not_required")
-	if($('#CreatorComment').val() == "")
-	    $('#CreatorComment').val("SwiftBOM generated at "+(new Date()).toISOString())
+	if (key == "PackageName") components++
+    if (!(key in khash)) khash[key] = []
+	khash[key][components < 0 ? 0 : components] = val
+  }
+  /* Remove <text> HTML stuff from Comment */
+  if ('CreatorComment' in khash)
+    khash["CreatorComment"][0] = $('<div>').html(khash["CreatorComment"][0]).text()
+  if ('Creator' in khash) {
+    var allcreators = khash['Creator'].splice(1)
+      /* Mandatory but many values allowed  but not supported
+      khash['Creator'][0] = khash['Creator'][0] +"\n"+allcreators.join("\n")
+       */
+      /* For this demo only use simplify this ignore all others */
+      var creatordata = khash['Creator'][0].split(":")
+      if (creatordata.length > 1) {
+        khash['CreatorType'] = [creatordata.shift()]
+        khash['Creator'][0] = creatordata.join(":")
+      } else
+        khash['CreatorType'][0] = "Organization"
+  }
+  /* Check for child SBOM if not fill the top SBOM*/
+  if (mcurrent_rowid == 0) {
+    /* Process the head as normal */
+    var headkeys = $('#main_table .thead :input').not(".has-default").not(".not_required")
+    if ($('#CreatorComment').val() == "")
+      $('#CreatorComment').val("SwiftBOM generated at " + (new Date()).toISOString())
 
-	for(var i=0; i< headkeys.length; i++) {
-	    var field = headkeys[i]
-	    if(!(field.name in khash)) {
-		swal("Data Error","Data does not contain required field "+field.name,"error")
-		add_invalid_feedback(field,"No header data found for "+headkeys[i])
-		return false
-	    }
-	    if(khash[field.name].length != 1) {
-		swal("Data Error",
-		     "Cardinality error for "+field.name+", only one value allowed found "+
-		     khash[field.name].length+" values","error")
-		return false
-	    }
-	    if(field.type == "datetime-local") {
-		try {
-		    field.value = new Date(khash[field.name][0]).toISOString().replace("Z","")
-		} catch(err) {
-		    console.log("Error when parsing date "+khash[field.name][0]+"XX")
-		    field.value = new Date().toISOString().replace("Z","")
-		    add_invalid_feedback(field,"Imported Date was incorrect! Replaced with current date")
-		    console.log(err)
-		}
-	    }
-	    else 
-		field.value = khash[field.name][0] || ""
-	}
-    } 
+      for (var i = 0; i < headkeys.length; i++) {
+        var field = headkeys[i]
+          if (!(field.name in khash)) {
+            swal("Data Error", "Data does not contain required field " + field.name, "error")
+            add_invalid_feedback(field, "No header data found for " + headkeys[i])
+            return false
+          }
+          if (khash[field.name].length != 1) {
+            swal("Data Error",
+              "Cardinality error for " + field.name + ", only one value allowed found " +
+              khash[field.name].length + " values", "error")
+            return false
+          }
+          if (field.type == "datetime-local") {
+            try {
+              field.value = new Date(khash[field.name][0]).toISOString().replace("Z", "")
+            } catch (err) {
+              console.log("Error when parsing date " + khash[field.name][0] + "XX")
+              field.value = new Date().toISOString().replace("Z", "")
+                add_invalid_feedback(field, "Imported Date was incorrect! Replaced with current date")
+                console.log(err)
+            }
+          } else
+            field.value = khash[field.name][0] || ""
+      }
+  }
 
-    var plen = khash["PackageName"].length
-    /* Create empty array for supplier name and supplier type comes from 
-       PackageSupplier: $SupplierType: $SupplierName 
-       variables */
-    khash['SupplierType'] = Array(plen).fill("Organization")
-    khash['SupplierName'] = Array(plen)
-    khash["CRelationship"] = khash['Relationship']
-    khash['Relationship'] = Array(plen).fill("Included")
-    khash['ParentComponent'] = Array(plen).fill("PrimaryComponent")
-    khash['Relationship'][0] = 'Primary'
-    /* Default primary component index is 0, search for DESCRIBES  */
-    var pIndex = 0
-    /* Default components to fill starts with 0 unless a child bom is selected */
-    if(typeof(khash.CRelationship) != "undefined") {
-	for(var i=0; i< plen; i++) {
-	    if (khash["CRelationship"][i].indexOf(khash['SPDXID']+' DESCRIBES ') > -1) {
-		pIndex = i
-		/* Capture parent SPDXID */
-		//khash["PSPDXID"] = khash["CSPDXID"][i]
-	    }
-	    else
-		add_cmp(mclass)
-	}
+  var plen = khash["PackageName"].length
+  /* Create empty array for supplier name and supplier type comes from
+  PackageSupplier: $SupplierType: $SupplierName
+  variables */
+  khash['SupplierType'] = Array(plen).fill("Organization")
+  khash['SupplierName'] = Array(plen)
+  khash["CRelationship"] = khash['Relationship']
+  khash['Relationship'] = Array(plen).fill("Included")
+  khash['ParentComponent'] = Array(plen).fill("PrimaryComponent")
+  khash['Relationship'][0] = 'Primary'
+  /* Default primary component index is 0, search for DESCRIBES  */
+  var pIndex = 0
+  /* Default components to fill starts with 0 unless a child bom is selected */
+  if (typeof(khash.CRelationship) != "undefined") {
+    for (var i = 0; i < plen; i++) {
+      if (khash["CRelationship"][i].indexOf(khash['SPDXID'] + ' DESCRIBES ') > -1) {
+        pIndex = i
+          /* Capture parent SPDXID */
+          //khash["PSPDXID"] = khash["CSPDXID"][i]
+      } else
+        add_cmp(mclass)
     }
-    /* SPDXID */
-    var cmps = $('#main_table .cmp_table')
-    console.log(mcurrent_rowid)
-    if(mcurrent_rowid > 0) {
-	/* Child BOM is true , process this for current field */
-	console.log(mcurrent_rowid,pIndex)
-	$('#Component'+mcurrent_rowid).attr("data-spdxid",khash["CSPDXID"][pIndex])
-	var bcmps = $('#Component'+mcurrent_rowid+' :input')
-	cmps = $('#main_table .cmp_table.childbom')
-	fill_component(bcmps,pIndex)
-	/* Remove the parent SPDXID of this as the one for the full document */
-	khash["PSPDXID"] = "DEFAULT"
-    } else {
-	/* No child bom involved, fill the primary component with pindex element */
-	$('#main_table .pcmp_table').attr("data-spdxid",khash["CSPDXID"][pIndex])
-	var pcmps = $('#main_table .pcmp_table :input')
-	fill_component(pcmps,pIndex)
-    }
-    /* Remove the primary Index Element from CSPDXID References */
-    var jkeys = Object.keys(khash)
-    for(var j=0; j< jkeys.length; j++) {
-	if(Array.isArray(khash[jkeys[j]]))
-	    if(khash[jkeys[j]].length == plen)
-		khash[jkeys[j]].splice(pIndex,1)
-    }
+  }
+  /* SPDXID */
+  var cmps = $('#main_table .cmp_table')
+  console.log(mcurrent_rowid)
+  if (mcurrent_rowid > 0) {
+    /* Child BOM is true , process this for current field */
+    console.log(mcurrent_rowid, pIndex)
+    $('#Component' + mcurrent_rowid).attr("data-spdxid", khash["CSPDXID"][pIndex])
+    var bcmps = $('#Component' + mcurrent_rowid + ' :input')
+      cmps = $('#main_table .cmp_table.childbom')
+      fill_component(bcmps, pIndex)
+      /* Remove the parent SPDXID of this as the one for the full document */
+      khash["PSPDXID"] = "DEFAULT"
+  } else {
+    /* No child bom involved, fill the primary component with pindex element */
+    $('#main_table .pcmp_table').attr("data-spdxid", khash["CSPDXID"][pIndex])
+    var pcmps = $('#main_table .pcmp_table :input')
+      fill_component(pcmps, pIndex)
+  }
+  /* Remove the primary Index Element from CSPDXID References */
+  var jkeys = Object.keys(khash)
+  for (var j = 0; j < jkeys.length; j++) {
+    if (Array.isArray(khash[jkeys[j]]))
+      if (khash[jkeys[j]].length == plen)
+        khash[jkeys[j]].splice(pIndex, 1)
+  }
 
-    //console.log(pIndex)
-    for(var i=0; i<  khash["CSPDXID"].length; i++) {
-	$(cmps[i]).attr("data-spdxid",khash["CSPDXID"][i])
-	var scmps = $(cmps[i]).find(":input")
-	if(scmps.length > 0) 
-	    fill_component(scmps,i)
+  //console.log(pIndex)
+  for (var i = 0; i < khash["CSPDXID"].length; i++) {
+    $(cmps[i]).attr("data-spdxid", khash["CSPDXID"][i])
+    var scmps = $(cmps[i]).find(":input")
+      if (scmps.length > 0)
+        fill_component(scmps, i)
+  }
+  update_relationships_psuedo(cmps)
+  if (fPid) {
+    /* We have a parent iFrame update the table there with the primary component
+    data and show the button */
+    self.parent.window.$('#' + fPid).find(".childbomButton").removeClass("d-none")
+    $('#PrimaryComponent').find("input.form-control").each(function (i, v) {
+      self.parent.window.$('#' + fPid).find('[name="' + v.name + '"]').val(v.value)
+    })
+    self.parent.window.swal("Child SBOM is loaded as an External Reference!")
+    /* Update hidden field in parent with External Reference information */
+    /* ExternalDocumentRef: DocmentRef-$ExtDocumentName $ExtDocumentNamespace  $ExtOptionalSHA256Singature
+    Relationship: SPDXRef-$EscPackageName CONTAINS DocumentRef-$ExtDocumentName:SPDXRef-$EscPrimaryPackageName
+     */
+    generate_spdx()
+    if ($('#dlspdx').data('sha256')) {
+      /* If sha256 signature exists use it*/
+      var fsha256 = $('#dlspdx').data('sha256')
+        $('#main_form').append($('<input>').attr('type', 'hidden').addClass('tempH').
+          attr('id', 'OptionalSHA256Signature').val('SHA256: ' + fsha256))
     }
-    update_relationships_psuedo(cmps)
-    if(fPid) {
-	/* We have a parent iFrame update the table there with the primary component
-	   data and show the button */
-	self.parent.window.$('#'+fPid).find(".childbomButton").removeClass("d-none")
-	$('#PrimaryComponent').find("input.form-control").each(function(i,v) {
-	    self.parent.window.$('#'+fPid).find('[name="'+v.name+'"]').val(v.value)
-	})
-	self.parent.window.swal("Child SBOM is loaded as an External Reference!")
-	/* Update hidden field in parent with External Reference information */
-	/* ExternalDocumentRef: DocmentRef-$ExtDocumentName $ExtDocumentNamespace  $ExtOptionalSHA256Singature
-	   Relationship: SPDXRef-$EscPackageName CONTAINS DocumentRef-$ExtDocumentName:SPDXRef-$EscPrimaryPackageName
-	*/
-	generate_spdx()
-	if($('#dlspdx').data('sha256')) {
-	    /* If sha256 signature exists use it*/
-	    var fsha256 = $('#dlspdx').data('sha256')
-	    $('#main_form').append($('<input>').attr('type','hidden').addClass('tempH').
-				   attr('id','OptionalSHA256Signature').val('SHA256: '+fsha256))
-	}
-	if($('#PrimaryPackageName').val()) {
-	    /* Escp primary packagename to be added as well*/
-	    var escpkgname = $('#PrimaryPackageName').val().replace(/[^A-Z0-9\.\-]/gi,'-')
-	    $('#main_form').append($('<input>').attr('type','hidden').addClass('tempH').
-				   attr('id','EscPackageName').val(escpkgname))
-	}
-	var externalInfo = $('.externalreference').html().
+    if ($('#PrimaryPackageName').val()) {
+      /* Escp primary packagename to be added as well*/
+      var escpkgname = $('#PrimaryPackageName').val().replace(/[^A-Z0-9\.\-]/gi, '-')
+        $('#main_form').append($('<input>').attr('type', 'hidden').addClass('tempH').
+          attr('id', 'EscPackageName').val(escpkgname))
+    }
+    var externalInfo = $('.externalreference').html().
 	    replace(/\$([A-Za-z0-9]+)/gi, x => { var y = x.replace("$Ext","")
 						 return $('#'+y).val() || ""
 					       })
 	console.log(externalInfo)
-	self.parent.window.$('#'+fPid).find(".ExtReferencePayload").html(externalInfo)
-    }
+      self.parent.window.$('#' + fPid).find(".ExtReferencePayload").html(externalInfo)
+  }
 }
 function update_relationships_psuedo(cmps) {
-    if((typeof(khash.CRelationship) != "undefined") &&
-       (cmps.length != khash["CRelationship"].length)) {
-	console.log("Relationship could not be updated")
-	console.log(cmps)
-	swal("Relationship mismatch","SPDX data on component relationships are not matching"+
-	     ", may require a manual check","warning")
-	return false
-    }
-    if("RelationshipExternal" in khash) {
-	var external_count = khash["RelationshipExternal"].length
-	for(var i=0; i<external_count; i++) {
-	    var kExt = khash["RelationshipExternal"][i].replace(/^\s+/,'').split(/\s+/)
-	    var tExt = $("table[data-spdxid='"+kExt[0]+"']")
-	    if(tExt.length == 1) {
-		tExt.find('.cbomenable').click()
-		tExt.find('.cbomfileExternal').click()
-	    }
-	}
-	swal("External Relationships detected!",
-	     "SPDX data on component relationships that may require additional ["+
-	     String(khash["RelationshipExternal"].length)+"] SPDX document(s). \nUse"+
-	     " Child BOM feature to add external SPDX references. ",
-	     "warning")
-    }
-    for(var i=0; i<cmps.length; i++) {
-	var parts = khash["CRelationship"][i].split(/\s+/)
-	var componentid = $("table[data-spdxid='"+parts[0]+"']").attr("id")
-	console.log(componentid,parts[0])
-	if (componentid)
-	    $(cmps[i]).find(".ParentComponent").val(componentid)
-    }
-    $('[name="PackageName"]').trigger('change')
+  if ((typeof(khash.CRelationship) != "undefined") &&
+    (cmps.length != khash["CRelationship"].length)) {
+    console.log("Relationship could not be updated")
+    console.log(cmps)
+    swal("Relationship mismatch", "SPDX data on component relationships are not matching" +
+      ", may require a manual check", "warning")
+    return false
+  }
+  if ("RelationshipExternal" in khash) {
+    var external_count = khash["RelationshipExternal"].length
+      for (var i = 0; i < external_count; i++) {
+        var kExt = khash["RelationshipExternal"][i].replace(/^\s+/, '').split(/\s+/)
+          var tExt = $("table[data-spdxid='" + kExt[0] + "']")
+          if (tExt.length == 1) {
+            tExt.find('.cbomenable').click()
+            tExt.find('.cbomfileExternal').click()
+          }
+      }
+      swal("External Relationships detected!",
+        "SPDX data on component relationships that may require additional [" +
+        String(khash["RelationshipExternal"].length) + "] SPDX document(s). \nUse" +
+        " Child BOM feature to add external SPDX references. ",
+        "warning")
+  }
+  for (var i = 0; i < cmps.length; i++) {
+    var parts = khash["CRelationship"][i].split(/\s+/)
+      var componentid = $("table[data-spdxid='" + parts[0] + "']").attr("id")
+      console.log(componentid, parts[0])
+      if (componentid)
+        $(cmps[i]).find(".ParentComponent").val(componentid)
+  }
+  $('[name="PackageName"]').trigger('change')
 }
-
 function fill_component(xcmps,xIndex) {
     for(var i=0; i< xcmps.length; i++) {
 	var field = xcmps[i]
