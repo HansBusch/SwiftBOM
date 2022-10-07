@@ -32,7 +32,7 @@ var $packages = {
 	    "referenceType": "purl"
 	}
     ],
-    "filesAnalyzed": "$FilesAnalyzed",
+//    "filesAnalyzed": "$FilesAnalyzed",
     "hasFiles": [
 	"SPDXRef-File-$BomRef"
     ],
@@ -813,15 +813,32 @@ function parse_spdx(spdxin, mchild, input, fPid) {
   khash = {}
   var lines = spdxin.split("\n")
   var components = -1;
+  var inText = 0;
+  var key = '';
+  var val = '';
   for (var i = 0; i < lines.length; i++) {
     /* Bug Id: carraige returrn from Windows world can cause problems */
     lines[i] = lines[i].replace(/\r/g, '')
+	if (inText) {
+	  if (lines[i].indexOf("</text>") > -1) {
+		inText = 0
+		khash[key][components < 0 ? 0 : components] = val
+		continue;
+	  }
+	  val += lines[i] + '\n'
+	  continue;
+	}
     /* Ignore Comments */
     if (lines[i][0] == '#')
       continue;
     var line = lines[i].split(':')
-    var key = line.shift()
-    var val = line.join(":").replace(/^\s+/, '')
+    key = line.shift()
+    val = line.join(":").replace(/^\s+/, '')
+    if (val.indexOf("<text>") > -1) {
+		inText = 1;
+		val = '';
+		continue;
+	}
     if (key == "Relationship") {
       /* Modify this key to capture "relationship" matchmaking problems*/
       if (val.indexOf("CONTAINS NO") > -1) {
@@ -836,6 +853,9 @@ function parse_spdx(spdxin, mchild, input, fPid) {
     if (!(key in khash)) khash[key] = []
 	khash[key][components < 0 ? 0 : components] = val
   }
+  if (inText) 
+    add_invalid_feedback(headkeys[0], "Missing text termination")
+
   /* Remove <text> HTML stuff from Comment */
   if ('CreatorComment' in khash)
     khash["CreatorComment"][0] = $('<div>').html(khash["CreatorComment"][0]).text()
@@ -1392,7 +1412,7 @@ function generate_spdx() {
 	}
 	spdxpkg = JSON.parse(JSON
 			     .stringify($packages)
-			     .replace(/\$([A-Za-z0-9]+)/gi, (_,x) => hkey[x]))
+			     .replace(/\$([A-Za-z0-9]+)/gi, (_,x) => hkey[x].replace(/\n/g,'\\n')))
 	if(("filesAnalyzed" in spdxpkg) && (spdxpkg.filesAnalyzed == "true")) {
 	    spdxpkg.filesAnalyzed = true
 	    /* In spdxJson packagefilename and filename can be the same*/
