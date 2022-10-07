@@ -1160,12 +1160,18 @@ function safeXML(inText) {
 	return "&#" + s.charCodeAt(0) + ";";
     })
 }
-function safeTXT(inText) {
-    inText = inText.replace(/^\s+/,'').replace(/\s+$/,'')
+function safeJSON(inText) {
+    inText = inText.replace(/^\s+/,'').replace(/\s+$/,'').replace(/["]/g, '\"')
     if(inText.toUpperCase() in DefaultEmpty) return inText.toUpperCase()
-    return "<text>"+inText.replace(/[&<>"'`=\/]/g, function (s) {
-	return "&#" + s.charCodeAt(0) + ";";
-    })+"</text>"
+	return inText.replace(/[\n]/g, '\\n')
+}
+function safeSPDX(inText) {
+	if (typeof inText == "undefined") return ''
+    inText = inText.replace(/^\s+/,'').replace(/\s+$/,'').replace(/["]/g, '\"')
+    if(inText.toUpperCase() in DefaultEmpty) return inText.toUpperCase()
+	if (inText.indexOf('\n') >= 0)
+		inText = "<text>\n"+inText+"\n</text>"
+	return safeXML(inText)
 }
 function validateXML(inXML) {
     var p = new DOMParser();
@@ -1183,7 +1189,7 @@ function spdx_lite_content(el,hkey) {
     el.each(function() {
 	/* Should have a value and should be unique to be added */
 	if((this.name in hkey) && (this.value != "") && (!(this.name in uniq))) {
-	    spdx_lite_add += this.name+": "+this.value+"\n"
+	    spdx_lite_add += this.name+": "+safeSPDX(this.value)+"\n"
 	    uniq[this.name] = 1
 	}
     })
@@ -1234,7 +1240,7 @@ function generate_spdx() {
     fjson={"Header":{},"PrimaryComponent":{},"Packages":[]}
     var hinputs = $('#main_table > tbody > tr > td > :input')
     var hkey = {}
-    hinputs.map(i => hkey[hinputs[i].name] = safeXML(hinputs[i].value))
+    hinputs.map(i => hkey[hinputs[i].name] = hinputs[i].value)
     try {
 	hkey['Created'] = new Date($('#Created').val())
 	    .toISOString().replace(/\.\d{3}Z/,'Z')
@@ -1244,24 +1250,19 @@ function generate_spdx() {
     }
     fjson.Header = hkey
     var thead = $('#spdx .head').html()
-    spdx += thead.replace(/\$([A-Za-z0-9]+)/gi, (_,x) => hkey[x])
+    spdx += thead.replace(/\$([A-Za-z0-9]+)/gi, (_,x) => safeSPDX(hkey[x]))
     var pc_uuid = generate_uuid()
     $('.pcmp_table').find('.BomRef').val(pc_uuid)
     hinputs = $('.pcmp_table tr :input')
     var pc = {}
     hinputs.map(i => {
-	if(!hinputs[i].value) {
-	    hkey[hinputs[i].name] = ""
-	    pc[hinputs[i].name] = ""
-	    return;
-	}
-	if(hinputs[i].type.toLowerCase() == "textarea") {
-	    hkey[hinputs[i].name] = safeTXT(hinputs[i].value)
-	    pc[hinputs[i].name] = safeTXT(hinputs[i].value);
-	} else {
-	    hkey[hinputs[i].name] =  safeXML(hinputs[i].value);
-	    pc[hinputs[i].name] = safeXML(hinputs[i].value);
-	}
+		if(!hinputs[i].value) {
+			hkey[hinputs[i].name] = ""
+			pc[hinputs[i].name] = ""
+			return;
+		}
+		hkey[hinputs[i].name] = hinputs[i].value
+		pc[hinputs[i].name] = hinputs[i].value;
     })
     fjson.PrimaryComponent = pc
     var tpcmp = $('#spdx .pcomponent').html()
@@ -1278,14 +1279,14 @@ function generate_spdx() {
     var PrimaryPackageName = hkey['PackageName']
     hkey['EscPrimaryPackageName'] = hkey['EscPackageName']
     spdxJson = JSON.parse(JSON.stringify(spdxJson)
-			  .replace(/\$([A-Za-z0-9]+)/gi, (_,x) => hkey[x]))
+			  .replace(/\$([A-Za-z0-9]+)/gi, (_,x) => safeJSON(hkey[x])))
     var swidpcmp = $('#swid .pcmp').val()
 	.replace(/\$([A-Za-z0-9]+)/gi, (_,x) => hkey[x])
     var cyclonedxcmp = $('#cyclonedx .cyclonedxpcmp').val()
 	.replace(/\$([A-Za-z0-9]+)/gi, (_,x) => hkey[x])
     cyclonedxJson['metadata'] = JSON.parse(JSON
 					   .stringify($metadata)
-					   .replace(/\$([A-Za-z0-9]+)/gi, (_,x) => hkey[x]))
+					   .replace(/\$([A-Za-z0-9]+)/gi, (_,x) => safeJSON(hkey[x])))
     alltreeData.push({props:JSON.stringify(hkey),
 		      table_id: "PrimaryComponent",
 		      name: hkey['PackageName'],
@@ -1293,7 +1294,7 @@ function generate_spdx() {
 		      children:[]})
     swid += swidpcmp
     cyclonedx += cyclonedxcmp 
-    spdx += tpcmp.replace(/\$([A-Za-z0-9]+)/gi, (_,x) => hkey[x])
+    spdx += tpcmp.replace(/\$([A-Za-z0-9]+)/gi, (_,x) => safeSPDX(hkey[x]))
     spdx += spdx_lite_content($('.pcmp_table .spdx-lite-field'),hkey)
     var spdxpkg = JSON.parse(JSON
 			     .stringify($packages)
@@ -1333,7 +1334,7 @@ function generate_spdx() {
 	      RelParent:"SPDXRef-"+hkey['EscPackageName']}
     spdxrel = JSON.parse(JSON
 			 .stringify($relationships)
-			 .replace(/\$([A-Za-z0-9]+)/gi, (_,x) => relkey[x]))
+			 .replace(/\$([A-Za-z0-9]+)/gi, (_,x) => safeJSON(relkey[x])))
     spdxJson['relationships'].push(spdxrel)
     cyclonedxJson['components'] = []
     cyclonedxdeps = ''
@@ -1373,11 +1374,7 @@ function generate_spdx() {
 	    cyclonedxJson['dependencies'].push(xdepJ)
 	hinputs.map( i => {
 	    if(!hinputs[i].value) return "dummy";
-	    if(hinputs[i].type.toLowerCase() == "textarea") {
-		hkey[hinputs[i].name] = safeTXT(hinputs[i].value)
-	    } else {
-		hkey[hinputs[i].name] =  safeXML(hinputs[i].value);
-	    }
+		hkey[hinputs[i].name] = hinputs[i].value
 	})
 	alltreeData.push({props: JSON.stringify(hkey),
 			  table_id: $(cmps[i]).attr("id"),
@@ -1389,7 +1386,7 @@ function generate_spdx() {
 	hkey['UrlPackageName'] = encodeURIComponent(hkey['PackageName'])
 	hkey['UrlSupplierName'] = encodeURIComponent(hkey['SupplierName'])
 	tpcmp = $('#spdx .subcomponent').html()
-	tpcmps += tpcmp.replace(/\$([A-Za-z0-9]+)/gi, (_,x) => hkey[x])
+	tpcmps += tpcmp.replace(/\$([A-Za-z0-9]+)/gi, (_,x) => safeSPDX(hkey[x]))
 	tpcmps += spdx_lite_content($(cmps[i]).find('.spdx-lite-field'),hkey)
 	tpcmps += $(cmps[i]).find('.ExtReferencePayload').html()
 	swidcmps += $('#swid .cmp').val().
@@ -1397,7 +1394,7 @@ function generate_spdx() {
 	var xcmpsJ = JSON.parse(JSON
 				.stringify($component)
 				.replace(/\$([A-Za-z0-9]+)/gi,
-					 (_,x) => hkey[x]))
+					 (_,x) => safeJSON(hkey[x])))
 	cyclonedxpcmps += $('#cyclonedx .cyclonedxcmp').val().
 	    replace(/\$([A-Za-z0-9]+)/gi, (_,x) => hkey[x])
 	/* custom_fields in cyclonedx from wtable table  */
@@ -1412,7 +1409,7 @@ function generate_spdx() {
 	}
 	spdxpkg = JSON.parse(JSON
 			     .stringify($packages)
-			     .replace(/\$([A-Za-z0-9]+)/gi, (_,x) => hkey[x].replace(/\n/g,'\\n')))
+			     .replace(/\$([A-Za-z0-9]+)/gi, (_,x) => safeJSON(hkey[x])))
 	if(("filesAnalyzed" in spdxpkg) && (spdxpkg.filesAnalyzed == "true")) {
 	    spdxpkg.filesAnalyzed = true
 	    /* In spdxJson packagefilename and filename can be the same*/
@@ -1432,7 +1429,7 @@ function generate_spdx() {
 	    var cyclonedxhashjson = JSON.parse(JSON
 					       .stringify(cyclonedxhashj)
 					       .replace(/\$([A-Za-z0-9]+)/gi,
-							(_,x) => hkey[x]))
+							(_,x) => safeJSON(hkey[x])))
 	    xcmpsJ = Object.assign({},xcmpsJ,cyclonedxhashjson)
 	}
 	else {
@@ -1445,14 +1442,14 @@ function generate_spdx() {
 		  RelParent:"SPDXRef-"+hkey['EscPrimaryPackageName']}
 	spdxrel = JSON.parse(JSON.stringify($relationships)
 			     .replace(/\$([A-Za-z0-9]+)/gi,
-				      (_,x) => relkey[x]))
+				      (_,x) => safeJSON(relkey[x])))
 	spdxJson['relationships'].push(spdxrel)
 	relkey = {RelType:"CONTAINS",
 		  RelChild:"NOASSERTION",
 		  RelParent:"SPDXRef-"+hkey['EscPackageName']}
 	spdxrel = JSON.parse(JSON.stringify($relationships)
 			     .replace(/\$([A-Za-z0-9]+)/gi,
-				      (_,x) => relkey[x]))
+				      (_,x) => safeJSON(relkey[x])))
 	spdxJson['relationships'].push(spdxrel)	
     }
     spdx += tpcmps
