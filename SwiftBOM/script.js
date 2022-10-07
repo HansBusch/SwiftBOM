@@ -931,8 +931,7 @@ function parse_spdx(spdxin, mchild, input, fPid) {
   var jkeys = Object.keys(khash)
   for (var j = 0; j < jkeys.length; j++) {
     if (Array.isArray(khash[jkeys[j]]))
-      if (khash[jkeys[j]].length == plen)
-        khash[jkeys[j]].splice(pIndex, 1)
+      khash[jkeys[j]].splice(pIndex, 1)
   }
 
   //console.log(pIndex)
