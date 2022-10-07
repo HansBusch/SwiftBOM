@@ -904,7 +904,7 @@ function parse_spdx(spdxin, mchild, input, fPid) {
       if (khash["CRelationship"][i].indexOf(khash['SPDXID'] + ' DESCRIBES ') > -1) {
         pIndex = i
           /* Capture parent SPDXID */
-          //khash["PSPDXID"] = khash["CSPDXID"][i]
+          //khash["PSPDXID"] = khash["SPDXID"][i]
       } else
         add_cmp(mclass)
     }
@@ -915,7 +915,7 @@ function parse_spdx(spdxin, mchild, input, fPid) {
   if (mcurrent_rowid > 0) {
     /* Child BOM is true , process this for current field */
     console.log(mcurrent_rowid, pIndex)
-    $('#Component' + mcurrent_rowid).attr("data-spdxid", khash["CSPDXID"][pIndex])
+    $('#Component' + mcurrent_rowid).attr("data-spdxid", khash["SPDXID"][pIndex])
     var bcmps = $('#Component' + mcurrent_rowid + ' :input')
       cmps = $('#main_table .cmp_table.childbom')
       fill_component(bcmps, pIndex)
@@ -923,11 +923,11 @@ function parse_spdx(spdxin, mchild, input, fPid) {
       khash["PSPDXID"] = "DEFAULT"
   } else {
     /* No child bom involved, fill the primary component with pindex element */
-    $('#main_table .pcmp_table').attr("data-spdxid", khash["CSPDXID"][pIndex])
+    $('#main_table .pcmp_table').attr("data-spdxid", khash["SPDXID"][pIndex])
     var pcmps = $('#main_table .pcmp_table :input')
       fill_component(pcmps, pIndex)
   }
-  /* Remove the primary Index Element from CSPDXID References */
+  /* Remove the primary Index Element from SPDXID References */
   var jkeys = Object.keys(khash)
   for (var j = 0; j < jkeys.length; j++) {
     if (Array.isArray(khash[jkeys[j]]))
@@ -936,8 +936,8 @@ function parse_spdx(spdxin, mchild, input, fPid) {
   }
 
   //console.log(pIndex)
-  for (var i = 0; i < khash["CSPDXID"].length; i++) {
-    $(cmps[i]).attr("data-spdxid", khash["CSPDXID"][i])
+  for (var i = 0; i < khash["SPDXID"].length; i++) {
+    $(cmps[i]).attr("data-spdxid", khash["SPDXID"][i])
     var scmps = $(cmps[i]).find(":input")
       if (scmps.length > 0)
         fill_component(scmps, i)
@@ -2165,7 +2165,7 @@ function FillFromExcel(dexcel) {
 	khash['SPDXID'][i+1] = 'SPDXRef-'+khash['PackageName'][i].replace(/[^A-Z0-9\.\-]/gi,'-')
     }
     /* SPDXID is repeated collect components SPDXID*/
-    khash["CSPDXID"] = khash["SPDXID"].splice(1)
+    khash["SPDXID"] = khash["SPDXID"].splice(1)
     /* Remove <text> HTML stuff from Comment */
     if('CreatorComment' in khash)
 	khash["CreatorComment"][0] = $('<div>').html(khash["CreatorComment"][0]).text()
@@ -2216,7 +2216,7 @@ function FillFromExcel(dexcel) {
 	if(khash["Relationship"][i] == "Primary") {
 	    pIndex = i
 	    /* Capture parent SPDXID */
-	    khash["PSPDXID"] = khash["CSPDXID"][i]
+	    khash["PSPDXID"] = khash["SPDXID"][i]
 	}
 	else
 	    add_cmp()
@@ -2224,8 +2224,8 @@ function FillFromExcel(dexcel) {
     /* SPDXID */
     var pcmps = $('#main_table .pcmp_table :input')
     fill_component(pcmps,pIndex)
-    $('#main_table .pcmp_table').attr("data-spdxid",khash["CSPDXID"][pIndex])    
-    /* Remove the primary Index Element from CSPDXID References */
+    $('#main_table .pcmp_table').attr("data-spdxid",khash["SPDXID"][pIndex])    
+    /* Remove the primary Index Element from SPDXID References */
     var jkeys = Object.keys(khash)
     for(var j=0; j< jkeys.length; j++) {
 	if(Array.isArray(khash[jkeys[j]]))
@@ -2234,8 +2234,8 @@ function FillFromExcel(dexcel) {
     }
     var cmps = $('#main_table .cmp_table')    
     //console.log(pIndex)
-    for(var i=0; i<  khash["CSPDXID"].length; i++) {
-	$(cmps[i]).attr("data-spdxid",khash["CSPDXID"][i])
+    for(var i=0; i<  khash["SPDXID"].length; i++) {
+	$(cmps[i]).attr("data-spdxid",khash["SPDXID"][i])
 	var scmps = $(cmps[i]).find(":input")
 	if(scmps.length > 0) 
 	    fill_component(scmps,i)
