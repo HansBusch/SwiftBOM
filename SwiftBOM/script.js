@@ -1464,7 +1464,7 @@ function generate_spdx() {
     $('.scontent').hide()
     $('#graph').show()
     $('#scontent').show()
-    var spdxdl = $('#spdxtag').text().replace(/\n\s+/g,'\n')
+    var spdxdl = $('#spdxtag').text().replace(/\n\t+/g,'\n')
     /* File Prefix */
     var fPfx = $('input[name="DocumentName"]').val()
 	.replace(/[^0-9A-Z]/gi,'-')+'-'
