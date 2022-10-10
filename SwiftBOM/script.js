@@ -838,7 +838,8 @@ function parse_spdx(spdxin, mchild, input, fPid) {
 		val = '';
 		continue;
 	}
-    if (key == "Relationship") {
+	if (key == "SPDXID" && components < 0) khash['Document-SPDXID'] = val;
+    else if (key == "Relationship") {
       /* Modify this key to capture "relationship" matchmaking problems*/
       if (val.indexOf("CONTAINS NO") > -1) {
         key = "RelationshipNONE"
@@ -918,15 +919,11 @@ function parse_spdx(spdxin, mchild, input, fPid) {
   /* Default primary component index is 0, search for DESCRIBES  */
   var pIndex = 0
   /* Default components to fill starts with 0 unless a child bom is selected */
-  if (typeof(khash.CRelationship) != "undefined") {
-    for (var i = 0; i < plen; i++) {
-      if (khash["CRelationship"][i].indexOf(khash['SPDXID'] + ' DESCRIBES ') > -1) {
-        pIndex = i
-          /* Capture parent SPDXID */
-          //khash["PSPDXID"] = khash["SPDXID"][i]
-      } else
-        add_cmp(mclass)
-    }
+  for (var i = 0; i < plen; i++) {
+//    if (khash["CRelationship"][i] != undefined && khash["CRelationship"][i].indexOf(' DESCRIBES ') > -1) {
+//        pIndex = i
+//	}
+    add_cmp(mclass)
   }
   /* SPDXID */
   var cmps = $('#main_table .cmp_table')
