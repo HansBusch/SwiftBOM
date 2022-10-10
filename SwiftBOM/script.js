@@ -821,6 +821,7 @@ function parse_spdx(spdxin, mchild, input, fPid) {
 	if (inText) {
 	  if (lines[i].indexOf("</text>") > -1) {
 		inText = 0
+		if (!(key in khash)) khash[key] = []
 		khash[key][components < 0 ? 0 : components] = val
 		continue;
 	  }
@@ -833,7 +834,7 @@ function parse_spdx(spdxin, mchild, input, fPid) {
     var line = lines[i].trim().split(':')
     key = line.shift()
     val = line.join(":").replace(/^\s+/, '')
-    if (val.indexOf("<text>") > -1) {
+    if (val.indexOf("<text>") > -1 && val.indexOf("</text>") < 0) {
 		inText = 1;
 		val = '';
 		continue;
