@@ -920,11 +920,14 @@ function parse_spdx(spdxin, mchild, input, fPid) {
   /* Default primary component index is 0, search for DESCRIBES  */
   var pIndex = 0
   /* Default components to fill starts with 0 unless a child bom is selected */
+  clen = $(".cmp_table").length
+
   for (var i = 0; i < plen; i++) {
 //    if (khash["CRelationship"][i] != undefined && khash["CRelationship"][i].indexOf(' DESCRIBES ') > -1) {
 //        pIndex = i
 //	}
-    add_cmp(mclass)
+    if (i >= clen)
+      add_cmp(mclass)
   }
   /* SPDXID */
   var cmps = $('#main_table .cmp_table')
@@ -1049,6 +1052,7 @@ function fill_component(xcmps,xIndex) {
     }
 }
 function update_cmp_names(w) {
+	return; // erases delete button
     var mtable = $(w).closest('table')
     var nval = ' ('+$(w).val()+')'
     var tid = mtable.attr('id')
@@ -1065,7 +1069,7 @@ function update_cmp_names(w) {
 }
 
 function add_cmp(mclass) {
-    $('#main_table .cmp_table .btn-danger').remove()
+//    $('#main_table .cmp_table .btn-danger').remove()
     var clen = 0
     $('.cmp_table').each(function(i,c) {
 	var xId = parseInt($(c).attr("id").replace("Component","")) + 1
@@ -2226,9 +2230,9 @@ function FillFromExcel(dexcel) {
     /* Default primary component index is 0, search for DESCRIBES  */
     var pIndex = 0
     for(var i=0; i< plen; i++) {
-	if(khash["Relationship"][i] == "Primary") {
-	    pIndex = i
-	    /* Capture parent SPDXID */
+		if(khash["Relationship"][i] == "Primary") {
+			pIndex = i
+			/* Capture parent SPDXID */
 	    khash["PSPDXID"] = khash["SPDXID"][i]
 	}
 	else
