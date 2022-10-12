@@ -15,13 +15,13 @@ var spdxJson = {
     "name" : "$DocumentName",
     "dataLicense" : "$DataLicense",
     "documentNamespace" : "http://www.hospitalproducts.acme",
-    "documentDescribes" : [ "SPDXRef-$EscPackageName" ],
+    "documentDescribes" : [ "$SPDXID" ],
     "packages" : [],
     "files": [],
     "relationships": []
 }
 var $packages = {
-    "SPDXID": "SPDXRef-$EscPackageName",
+    "SPDXID": "$SPDXID",
     "comment": "PURL is pkg:supplier/$UrlSupplierName/$UrlPackageName@$PackageVersion $AddPackageComment",
     "copyrightText": "$PackageCopyrightText",
     "downloadLocation": "$PackageDownloadLocation",
@@ -972,7 +972,7 @@ function parse_spdx(spdxin, mchild, input, fPid) {
     self.parent.window.swal("Child SBOM is loaded as an External Reference!")
     /* Update hidden field in parent with External Reference information */
     /* ExternalDocumentRef: DocmentRef-$ExtDocumentName $ExtDocumentNamespace  $ExtOptionalSHA256Singature
-    Relationship: SPDXRef-$EscPackageName CONTAINS DocumentRef-$ExtDocumentName:SPDXRef-$EscPrimaryPackageName
+    Relationship: $SPDXID CONTAINS DocumentRef-$ExtDocumentName:SPDXRef-$EscPrimaryPackageName
      */
     generate_spdx()
     if ($('#dlspdx').data('sha256')) {
@@ -985,7 +985,7 @@ function parse_spdx(spdxin, mchild, input, fPid) {
       /* Escp primary packagename to be added as well*/
       var escpkgname = $('#PrimaryPackageName').val().replace(/[^A-Z0-9\.\-]/gi, '-')
         $('#main_form').append($('<input>').attr('type', 'hidden').addClass('tempH').
-          attr('id', 'EscPackageName').val(escpkgname))
+          attr('id', 'SPDXID').val(escpkgname))
     }
     var externalInfo = $('.externalreference').html().
 	    replace(/\$([A-Za-z0-9]+)/gi, x => { var y = x.replace("$Ext","")
@@ -1249,6 +1249,7 @@ function generate_spdx() {
 	hkey['Created'] = new Date($('#Created').val().split(",")[0])
 	    .toISOString().replace(/\.\d{3}Z/,'Z')
     }
+	var packageID = hkey['SPDXID']
     fjson.Header = hkey
     var thead = $('#spdx .head').html()
     spdx += thead.replace(/\$([A-Za-z0-9]+)/gi, (_,x) => safeSPDX(hkey[x]))
@@ -1270,15 +1271,14 @@ function generate_spdx() {
     hkey['UrlSupplierName'] = encodeURIComponent(hkey['SupplierName'])
     hkey['UrlPackageName'] = encodeURIComponent(hkey['PackageName'])
     /* Used as a local unique identifier for a component - SPDX, CycloneDX */
+	hkey['BomRef'] = hkey['SPDXID']
     if((!('BomRef' in hkey)) || (hkey['BomRef'] == "")) {
 	hkey['BomRef'] = generate_uuid()
 	$('.pcmp_table').find('.BomRef').val(hkey['BomRef'])
     }
-    hkey['EscPackageName'] = hkey['BomRef']
-    hkey['PrimaryBomRef'] = hkey['BomRef']
+    hkey['ParentID'] = packageID
     $('.pcmp_table').attr('data-bomref', hkey['BomRef'])
     var PrimaryPackageName = hkey['PackageName']
-    hkey['EscPrimaryPackageName'] = hkey['EscPackageName']
     spdxJson = JSON.parse(JSON.stringify(spdxJson)
 			  .replace(/\$([A-Za-z0-9]+)/gi, (_,x) => safeJSON(hkey[x])))
     var swidpcmp = $('#swid .pcmp').val()
@@ -1322,7 +1322,7 @@ function generate_spdx() {
     }
     spdxJson['packages'].push(spdxpkg)
     var relkey = {RelType:"DESCRIBES",
-		  RelChild:"SPDXRef-"+hkey['EscPackageName'],
+		  RelChild:"SPDXRef-"+hkey['SPDXID'],
 		  RelParent:hkey['SPDXID']}
     var spdxrel = JSON.parse(JSON
 			     .stringify($relationships)
@@ -1332,7 +1332,7 @@ function generate_spdx() {
     spdxJson['relationships'].push(spdxrel)
     relkey = {RelType:"CONTAINS",
 	      RelChild:"NONE",
-	      RelParent:"SPDXRef-"+hkey['EscPackageName']}
+	      RelParent:"SPDXRef-"+hkey['SPDXID']}
     spdxrel = JSON.parse(JSON
 			 .stringify($relationships)
 			 .replace(/\$([A-Za-z0-9]+)/gi, (_,x) => safeJSON(relkey[x])))
@@ -1346,113 +1346,115 @@ function generate_spdx() {
     var swidcmps = ""
     var cyclonedxpcmps = ""
     for(var i=0; i< cmps.length; i++) {
-	hkey = {}
-	hkey['PrimaryPackageName'] = PrimaryPackageName
-	hkey['EscPrimaryPackageName'] = $('.pcmp_table').data('bomref')
-	var parent = PrimaryPackageName
-	if($(cmps[i]).data('bomref')) { 
-	    hkey['BomRef'] = $(cmps[i]).data('bomref')
-	} else {
-	    var uuid = generate_uuid()
-	    hkey['BomRef'] = uuid
-	    $(cmps[i]).attr('data-bomref',uuid)
+		hkey = {}
+		hkey['PrimaryPackageName'] = PrimaryPackageName
+		hkey['ParentID'] = $('.pcmp_table').data('bomref')
+		var parent = PrimaryPackageName
+		if($(cmps[i]).data('bomref')) { 
+			hkey['BomRef'] = $(cmps[i]).data('bomref')
+		} else {
+			var uuid = generate_uuid()
+			hkey['BomRef'] = uuid
+			$(cmps[i]).attr('data-bomref',uuid)
+		}
+		hkey['DependBomRef'] = hkey['PrimaryBomRef']
+		hkey['MyBomRef'] = hkey['BomRef']
+		hinputs = $(cmps[i]).find(':input').not('button')
+		var xdepJ = []
+		if($(cmps[i]).find(".ParentComponent").val() != "PrimaryComponent") {
+			/* This is a child relationship of level 2 or more */
+			var parentTable = $(cmps[i]).find(".ParentComponent").val()
+			var parentPackageName = $('#'+parentTable).find('input[name="PackageName"]').val()
+			parent = parentPackageName
+			hkey['ParentID'] = $('#'+parentTable).data('bomref')
+		} else {
+			var tid = $(cmps[i]).attr("id")
+			populate_dependencies(hkey['MyBomRef'],tid)
+		}
+		if(xdepJ.length > 0)
+			cyclonedxJson['dependencies'].push(xdepJ)
+		hinputs.map( i => {
+			if(!hinputs[i].value) return "dummy";
+			hkey[hinputs[i].name] = hinputs[i].value
+		})
+		if (!("SPDXID" in hkey ) || hkey['SPDXID'] == '')
+			hkey['SPDXID'] = 'SPDXREF-' + generate_uuid();
+
+		alltreeData.push({props: JSON.stringify(hkey),
+				  table_id: $(cmps[i]).attr("id"),
+				  name: hkey['PackageName'],
+				  parent: parent,
+				  children:[]})	
+		fjson.Packages.push(hkey)
+		hkey['UrlPackageName'] = encodeURIComponent(hkey['PackageName'])
+		hkey['UrlSupplierName'] = encodeURIComponent(hkey['SupplierName'])
+		tpcmp = $('#spdx .subcomponent').html()
+		tpcmps += tpcmp.replace(/\$([A-Za-z0-9]+)/gi, (_,x) => safeSPDX(hkey[x]))
+		tpcmps += spdx_lite_content($(cmps[i]).find('.spdx-lite-field'),hkey)
+		tpcmps += $(cmps[i]).find('.ExtReferencePayload').html()
+		swidcmps += $('#swid .cmp').val().
+			replace(/\$([A-Za-z0-9]+)/gi, (_,x) => hkey[x])
+		var xcmpsJ = JSON.parse(JSON
+					.stringify($component)
+					.replace(/\$([A-Za-z0-9]+)/gi,
+						 (_,x) => safeJSON(hkey[x])))
+		cyclonedxpcmps += $('#cyclonedx .cyclonedxcmp').val().
+			replace(/\$([A-Za-z0-9]+)/gi, (_,x) => hkey[x])
+		/* custom_fields in cyclonedx from wtable table  */
+		if($(cmps[i]).data('custom_cyclonedx')) {
+			var add_data = $(cmps[i]).data('custom_cyclonedx')
+			xcmpsJ = Object.assign({},xcmpsJ,add_data)
+			if('cpe' in add_data) {
+			cyclonedxpcmps = cyclonedxpcmps
+				.replace(/<\/component>\s+$/,
+					 "<cpe>"+add_data.cpe+"</cpe>\n</component>\n")
+			}
+		}
+		spdxpkg = JSON.parse(JSON
+					 .stringify($packages)
+					 .replace(/\$([A-Za-z0-9]+)/gi, (_,x) => safeJSON(hkey[x])))
+		if(("filesAnalyzed" in spdxpkg) && (spdxpkg.filesAnalyzed == "true")) {
+			spdxpkg.filesAnalyzed = true
+			/* In spdxJson packagefilename and filename can be the same*/
+			if('FileName' in hkey) {
+			hkey['PackageFileName'] = hkey['FileName']
+			}		
+			var spdxfile = JSON.parse(JSON
+						  .stringify($files)
+						  .replace(/\$([A-Za-z0-9]+)/gi,
+							   (_,x) => hkey[x]))
+			spdxJson['files'].push(spdxfile)
+			var cyclonedxhashxml = cyclonedxhash.replace(/\$([A-Za-z0-9]+)/gi,
+								 (_,x) => hkey[x])
+			cyclonedxpcmps = cyclonedxpcmps
+			.replace(/<\/component>\s+$/,
+				 cyclonedxhashxml+"\n</component>\n")
+			var cyclonedxhashjson = JSON.parse(JSON
+							   .stringify(cyclonedxhashj)
+							   .replace(/\$([A-Za-z0-9]+)/gi,
+								(_,x) => safeJSON(hkey[x])))
+			xcmpsJ = Object.assign({},xcmpsJ,cyclonedxhashjson)
+		}
+		else {
+			spdxpkg.filesAnalyzed = false
+		}
+		spdxJson['packages'].push(spdxpkg)
+		cyclonedxJson['components'].push(xcmpsJ)	
+		relkey = {RelType:"CONTAINS",
+			  RelChild:hkey['SPDXID'],
+			  RelParent:hkey['ParentID']}
+		spdxrel = JSON.parse(JSON.stringify($relationships)
+					 .replace(/\$([A-Za-z0-9]+)/gi,
+						  (_,x) => safeJSON(relkey[x])))
+		spdxJson['relationships'].push(spdxrel)
+		relkey = {RelType:"CONTAINS",
+			  RelChild:"NOASSERTION",
+			  RelParent:hkey['SPDXID']}
+		spdxrel = JSON.parse(JSON.stringify($relationships)
+					 .replace(/\$([A-Za-z0-9]+)/gi,
+						  (_,x) => safeJSON(relkey[x])))
+		spdxJson['relationships'].push(spdxrel)	
 	}
-	hkey['DependBomRef'] = hkey['PrimaryBomRef']
-	hkey['MyBomRef'] = hkey['BomRef']
-	hinputs = $(cmps[i]).find(':input').not('button')
-	var xdepJ = []
-	if($(cmps[i]).find(".ParentComponent").val() != "PrimaryComponent") {
-	    /* This is a child relationship of level 2 or more */
-	    var parentTable = $(cmps[i]).find(".ParentComponent").val()
-	    var parentPackageName = $('#'+parentTable).find('input[name="PackageName"]').val()
-	    parent = parentPackageName
-	    hkey['EscPrimaryPackageName'] = $('#'+parentTable).data('bomref')
-	} else {
-	    var tid = $(cmps[i]).attr("id")
-	    populate_dependencies(hkey['MyBomRef'],tid)
-	}
-	if(xdepJ.length > 0)
-	    cyclonedxJson['dependencies'].push(xdepJ)
-	hinputs.map( i => {
-	    if(!hinputs[i].value) return "dummy";
-		hkey[hinputs[i].name] = hinputs[i].value
-	})
-	alltreeData.push({props: JSON.stringify(hkey),
-			  table_id: $(cmps[i]).attr("id"),
-			  name: hkey['PackageName'],
-			  parent: parent,
-			  children:[]})	
-	fjson.Packages.push(hkey)
-	hkey['EscPackageName'] = hkey['BomRef']
-	hkey['UrlPackageName'] = encodeURIComponent(hkey['PackageName'])
-	hkey['UrlSupplierName'] = encodeURIComponent(hkey['SupplierName'])
-	tpcmp = $('#spdx .subcomponent').html()
-	tpcmps += tpcmp.replace(/\$([A-Za-z0-9]+)/gi, (_,x) => safeSPDX(hkey[x]))
-	tpcmps += spdx_lite_content($(cmps[i]).find('.spdx-lite-field'),hkey)
-	tpcmps += $(cmps[i]).find('.ExtReferencePayload').html()
-	swidcmps += $('#swid .cmp').val().
-	    replace(/\$([A-Za-z0-9]+)/gi, (_,x) => hkey[x])
-	var xcmpsJ = JSON.parse(JSON
-				.stringify($component)
-				.replace(/\$([A-Za-z0-9]+)/gi,
-					 (_,x) => safeJSON(hkey[x])))
-	cyclonedxpcmps += $('#cyclonedx .cyclonedxcmp').val().
-	    replace(/\$([A-Za-z0-9]+)/gi, (_,x) => hkey[x])
-	/* custom_fields in cyclonedx from wtable table  */
-	if($(cmps[i]).data('custom_cyclonedx')) {
-	    var add_data = $(cmps[i]).data('custom_cyclonedx')
-	    xcmpsJ = Object.assign({},xcmpsJ,add_data)
-	    if('cpe' in add_data) {
-		cyclonedxpcmps = cyclonedxpcmps
-		    .replace(/<\/component>\s+$/,
-			     "<cpe>"+add_data.cpe+"</cpe>\n</component>\n")
-	    }
-	}
-	spdxpkg = JSON.parse(JSON
-			     .stringify($packages)
-			     .replace(/\$([A-Za-z0-9]+)/gi, (_,x) => safeJSON(hkey[x])))
-	if(("filesAnalyzed" in spdxpkg) && (spdxpkg.filesAnalyzed == "true")) {
-	    spdxpkg.filesAnalyzed = true
-	    /* In spdxJson packagefilename and filename can be the same*/
-	    if('FileName' in hkey) {
-		hkey['PackageFileName'] = hkey['FileName']
-	    }		
-	    var spdxfile = JSON.parse(JSON
-				      .stringify($files)
-				      .replace(/\$([A-Za-z0-9]+)/gi,
-					       (_,x) => hkey[x]))
-	    spdxJson['files'].push(spdxfile)
-	    var cyclonedxhashxml = cyclonedxhash.replace(/\$([A-Za-z0-9]+)/gi,
-							 (_,x) => hkey[x])
-	    cyclonedxpcmps = cyclonedxpcmps
-		.replace(/<\/component>\s+$/,
-			 cyclonedxhashxml+"\n</component>\n")
-	    var cyclonedxhashjson = JSON.parse(JSON
-					       .stringify(cyclonedxhashj)
-					       .replace(/\$([A-Za-z0-9]+)/gi,
-							(_,x) => safeJSON(hkey[x])))
-	    xcmpsJ = Object.assign({},xcmpsJ,cyclonedxhashjson)
-	}
-	else {
-	    spdxpkg.filesAnalyzed = false
-	}
-	spdxJson['packages'].push(spdxpkg)
-	cyclonedxJson['components'].push(xcmpsJ)	
-	relkey = {RelType:"CONTAINS",
-		  RelChild:"SPDXRef-"+hkey['EscPackageName'],
-		  RelParent:"SPDXRef-"+hkey['EscPrimaryPackageName']}
-	spdxrel = JSON.parse(JSON.stringify($relationships)
-			     .replace(/\$([A-Za-z0-9]+)/gi,
-				      (_,x) => safeJSON(relkey[x])))
-	spdxJson['relationships'].push(spdxrel)
-	relkey = {RelType:"CONTAINS",
-		  RelChild:"NOASSERTION",
-		  RelParent:"SPDXRef-"+hkey['EscPackageName']}
-	spdxrel = JSON.parse(JSON.stringify($relationships)
-			     .replace(/\$([A-Za-z0-9]+)/gi,
-				      (_,x) => safeJSON(relkey[x])))
-	spdxJson['relationships'].push(spdxrel)	
-    }
     spdx += tpcmps
     swid += swidcmps+swidTail
     cyclonedx +=  '<components>\n' + cyclonedxpcmps + '</components>\n'+

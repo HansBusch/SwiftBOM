@@ -274,6 +274,8 @@
 			<br />
 			<input type="hidden" name="BomRef"
 			class="BomRef not_required">
+			<input type="hidden" name="SPDXID"
+			class="not_required">
 			<input type="checkbox" class="check_cpe not_required"
 			       onchange="use_cpe(this)"/>
 			<a class="text-small" href="javascript:void(0)"
@@ -527,6 +529,8 @@
 	      <td>
 		<input type="hidden" name="BomRef"
 		class="BomRef not_required">
+		<input type="hidden" name="SPDXID"
+		class="not_required">
 		<select name="ParentComponent" class="form-control ParentComponent">
 		  <option value="PrimaryComponent">PrimaryComponent</option>
 		</select>
@@ -793,13 +797,13 @@
 	## Packages
 	## 2.4 Primary Component (described by the SBOM)
 	PackageName: $PackageName
-	SPDXID: SPDXRef-$EscPackageName
+	SPDXID: $SPDXID
 	PackageComment: PURL is pkg:supplier/$UrlSupplierName/$UrlPackageName@$PackageVersion $AddPackageComment
 	ExternalRef: PACKAGE-MANAGER purl pkg:supplier/$UrlSupplierName/$UrlPackageName@$PackageVersion
 	PackageVersion: $PackageVersion
 	PackageSupplier: $SupplierType: $SupplierName
-	Relationship: $SPDXID DESCRIBES SPDXRef-$EscPackageName
-	Relationship: SPDXRef-$EscPackageName CONTAINS NONE
+	Relationship: $ParentID DESCRIBES $SPDXID
+	Relationship: $SPDXID CONTAINS NONE
 	PackageDownloadLocation: $PackageDownloadLocation
 	FilesAnalyzed: $FilesAnalyzed
 	PackageLicenseConcluded: $PackageLicenseConcluded
@@ -810,13 +814,13 @@
 	## 2.4 All-Levels Components
 	##
 	PackageName: $PackageName
-	SPDXID: SPDXRef-$EscPackageName
+	SPDXID: $SPDXID
 	PackageComment:  PURL is pkg:supplier/$UrlSupplierName/$UrlPackageName@$PackageVersion $AddPackageComment
 	ExternalRef: PACKAGE-MANAGER purl pkg:supplier/$UrlSupplierName/$UrlPackageName@$PackageVersion	
 	PackageVersion: $PackageVersion
 	PackageSupplier: $SupplierType: $SupplierName
-	Relationship: SPDXRef-$EscPrimaryPackageName CONTAINS SPDXRef-$EscPackageName
-	Relationship: SPDXRef-$EscPackageName CONTAINS NOASSERTION	
+	Relationship: $ParentID CONTAINS $SPDXID
+	Relationship: $SPDXID CONTAINS NOASSERTION	
 	PackageDownloadLocation: $PackageDownloadLocation
 	FilesAnalyzed: $FilesAnalyzed
 	PackageLicenseConcluded: $PackageLicenseConcluded
