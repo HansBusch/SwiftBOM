@@ -87,7 +87,7 @@ var $metadata = {
     ],
     "component": {
 	"type": "application",
-	"bom-ref": "$BomRef",
+	"bom-ref": "$SPDXID",
 	"name": "$PackageName",
 	"purl": "pkg:supplier/$UrlSupplierName/$UrlPackageName@$PackageVersion",
 	"supplier": {
@@ -810,6 +810,7 @@ function parse_spdx(spdxin, mchild, input, fPid) {
       mclass = "childbom"
   }
   khash = {}
+  khash['SPDXID'] = [generate_uuid()]
   var lines = spdxin.split("\n")
   var components = -1;
   var inText = 0;
@@ -1087,8 +1088,7 @@ function add_cmp(mclass) {
 	$('#Component'+clen).addClass(mclass)
     }
     var uuid = generate_uuid()
-    $('#Component'+clen).attr('data-bomref',uuid)
-    $('#Component'+clen).find(".BomRef").val(uuid)
+    $('#Component'+clen).find('input[name="SPDXID"]').val(uuid)
     var pcs = $('#main_table .ParentComponent')
     for(var i=0; i<pcs.length; i++) {
 	var id = $(pcs[i]).closest('table').attr('id')
@@ -1203,7 +1203,7 @@ function populate_dependencies(mybomref,componentId) {
     index = index -1
     var t = $('#main_table .cmp_table .ParentComponent').filter(function() {
 	if($(this).val() == componentId) {
-	    var cBomRef = $(this).closest(".cmp_table").data("bomref")
+	    var cBomRef = $(this).closest(".cmp_table").find('input[name="SPDXID"]').val().replace(/SPDXRef-/, '')
 	    if(cBomRef) {
 		cyclonedxJson['dependencies'][index]['dependsOn'].push(cBomRef)
 		xmlu = xmlu + '  <dependency ref="$DepBomRef"/>\n'.replace("$DepBomRef",cBomRef)
@@ -1253,8 +1253,6 @@ function generate_spdx() {
     fjson.Header = hkey
     var thead = $('#spdx .head').html()
     spdx += thead.replace(/\$([A-Za-z0-9]+)/gi, (_,x) => safeSPDX(hkey[x]))
-    var pc_uuid = generate_uuid()
-    $('.pcmp_table').find('.BomRef').val(pc_uuid)
     hinputs = $('.pcmp_table tr :input')
     var pc = {}
     hinputs.map(i => {
@@ -1270,15 +1268,10 @@ function generate_spdx() {
     var tpcmp = $('#spdx .pcomponent').html()
     hkey['UrlSupplierName'] = encodeURIComponent(hkey['SupplierName'])
     hkey['UrlPackageName'] = encodeURIComponent(hkey['PackageName'])
-    /* Used as a local unique identifier for a component - SPDX, CycloneDX */
-	hkey['BomRef'] = hkey['SPDXID']
-    if((!('BomRef' in hkey)) || (hkey['BomRef'] == "")) {
-	hkey['BomRef'] = generate_uuid()
-	$('.pcmp_table').find('.BomRef').val(hkey['BomRef'])
-    }
     hkey['ParentID'] = packageID
-    $('.pcmp_table').attr('data-bomref', hkey['BomRef'])
     var PrimaryPackageName = hkey['PackageName']
+    var PrimaryID = hkey['SPDXID']
+	var PrimaryBomRef = PrimaryID.replace(/SPDXRef-/, '') 
     spdxJson = JSON.parse(JSON.stringify(spdxJson)
 			  .replace(/\$([A-Za-z0-9]+)/gi, (_,x) => safeJSON(hkey[x])))
     var swidpcmp = $('#swid .pcmp').val()
@@ -1322,7 +1315,7 @@ function generate_spdx() {
     }
     spdxJson['packages'].push(spdxpkg)
     var relkey = {RelType:"DESCRIBES",
-		  RelChild:"SPDXRef-"+hkey['SPDXID'],
+		  RelChild:hkey['SPDXID'],
 		  RelParent:hkey['SPDXID']}
     var spdxrel = JSON.parse(JSON
 			     .stringify($relationships)
@@ -1332,14 +1325,14 @@ function generate_spdx() {
     spdxJson['relationships'].push(spdxrel)
     relkey = {RelType:"CONTAINS",
 	      RelChild:"NONE",
-	      RelParent:"SPDXRef-"+hkey['SPDXID']}
+	      RelParent:hkey['SPDXID']}
     spdxrel = JSON.parse(JSON
 			 .stringify($relationships)
 			 .replace(/\$([A-Za-z0-9]+)/gi, (_,x) => safeJSON(relkey[x])))
     spdxJson['relationships'].push(spdxrel)
     cyclonedxJson['components'] = []
     cyclonedxdeps = ''
-    populate_dependencies(hkey['PrimaryBomRef'],"PrimaryComponent")
+    populate_dependencies(PrimaryBomRef,"PrimaryComponent")
 
     var cmps = $('#main_table .cmp_table')
     var tpcmps = ""
@@ -1347,38 +1340,29 @@ function generate_spdx() {
     var cyclonedxpcmps = ""
     for(var i=0; i< cmps.length; i++) {
 		hkey = {}
-		hkey['PrimaryPackageName'] = PrimaryPackageName
-		hkey['ParentID'] = $('.pcmp_table').data('bomref')
-		var parent = PrimaryPackageName
-		if($(cmps[i]).data('bomref')) { 
-			hkey['BomRef'] = $(cmps[i]).data('bomref')
-		} else {
-			var uuid = generate_uuid()
-			hkey['BomRef'] = uuid
-			$(cmps[i]).attr('data-bomref',uuid)
-		}
-		hkey['DependBomRef'] = hkey['PrimaryBomRef']
-		hkey['MyBomRef'] = hkey['BomRef']
 		hinputs = $(cmps[i]).find(':input').not('button')
+		hinputs.map( i => {
+			if(!hinputs[i].value) return "dummy";
+			hkey[hinputs[i].name] = hinputs[i].value
+		})
+		hkey['PrimaryPackageName'] = PrimaryPackageName
+		hkey['ParentID'] = PrimaryID
+		var parent = PrimaryPackageName
+		hkey['DependBomRef'] = PrimaryBomRef
+		hkey['BomRef'] = hkey['SPDXID'].replace(/SPDXRef-/, '') 
 		var xdepJ = []
 		if($(cmps[i]).find(".ParentComponent").val() != "PrimaryComponent") {
 			/* This is a child relationship of level 2 or more */
 			var parentTable = $(cmps[i]).find(".ParentComponent").val()
 			var parentPackageName = $('#'+parentTable).find('input[name="PackageName"]').val()
 			parent = parentPackageName
-			hkey['ParentID'] = $('#'+parentTable).data('bomref')
+			hkey['ParentID'] = $('#'+parentTable).find('input[name="SPDXID"]').val()
 		} else {
 			var tid = $(cmps[i]).attr("id")
-			populate_dependencies(hkey['MyBomRef'],tid)
+			populate_dependencies(hkey['BomRef'],tid)
 		}
 		if(xdepJ.length > 0)
 			cyclonedxJson['dependencies'].push(xdepJ)
-		hinputs.map( i => {
-			if(!hinputs[i].value) return "dummy";
-			hkey[hinputs[i].name] = hinputs[i].value
-		})
-		if (!("SPDXID" in hkey ) || hkey['SPDXID'] == '')
-			hkey['SPDXID'] = 'SPDXREF-' + generate_uuid();
 
 		alltreeData.push({props: JSON.stringify(hkey),
 				  table_id: $(cmps[i]).attr("id"),
@@ -1919,13 +1903,13 @@ function simulate_vuls() {
 	vkey['CVE'] = cve;
 	var graphid = vid;
 	var wtable = $('[data-graphid="'+graphid+'"]');
-	vkey['BomRef'] = wtable.data('bomref');
+	vkey['SPDXID'] = wtable.data('SPDXID');
 	cdxvuls += cdxvul.replace(/\$([A-Za-z0-9]+)/gi,
 				  (_,x) => safeXML(vkey[x]));
 	var csaf_cve = {
 	    description: cve,
 	    cve:cve,
-	    BomRef: wtable.data("bomref") };
+	    BomRef: wtable.data('SPDXID') };
 	var cve_index = cve_data.findIndex(x => x.cve.CVE_data_meta.ID == cve);
 	if(cve_index > -1) {
 	    var cve_df = cve_data[cve_index]
@@ -1942,7 +1926,7 @@ function simulate_vuls() {
 		    ('cvssV3' in cve_df.impact.baseMetricV3)) {
 		    /* copy object to CSAF CVSSv3*/
 		    csaf_vuls['scores'] = [{
-			"products":["CSAFPID-"+wtable.data('bomref')] }];
+			"products":["CSAFPID-"+wtable.data('SPDXID')] }];
 		    csaf_vuls.scores[0]['cvss_v3'] = Object.assign(cve_df
 							       .impact
 							       .baseMetricV3
@@ -1952,7 +1936,7 @@ function simulate_vuls() {
 			 ('cvssV2' in cve_df.impact.baseMetricV2)) {
 		    /* copy object to CSAF CVSSv3*/
 		    csaf_vuls['scores'] = [{
-			"products":["CSAFPID-"+wtable.data('bomref')] }];
+			"products":["CSAFPID-"+wtable.data('SPDXID')] }];
 		    csaf_vuls.scores[0]['cvss_v2'] = Object.assign(cve_df
 								.impact
 								.baseMetricV2
