@@ -220,13 +220,12 @@
 	    <tr class="thead">
 	      <td>Creator</td>
 	      <td>
-		<select name="CreatorType" class="form-control mauto">
-		  <option>Organization</option>
-		  <option>Person</option>
-		  <option>Tool</option>
-		</select>
-		<input class="form-control mauto" type="text" name="Creator" 
-		       placeholder="ACME-Hospital-Division()">
+		  <table class="creatortable">
+		  <tr><td> Organization</td><td><input class="form-control mauto not_required" type="text" name="Creator-Organization" id="Creator-Organization"
+		       placeholder="ACME-Hospital-Division()"></td></tr>
+		  <tr><td> Person</td><td><input class="form-control mauto not_required" type="text" name="Creator-Person" id="Creator-Person"></td></tr>
+		  <tr><td> Tool</td><td><input class="form-control mauto not_required" type="text" name="Creator-Tool" id="Creator-Tool"></td></tr>
+		  </table>
 	      </td>
 	    </tr>
 	    <tr class="thead">
@@ -780,14 +779,14 @@
     </div>
     <div id="spdx" class="spdx">
       <div class="head">## Document Header
-	SPDXVersion: $SPDXVersion
-	DataLicense: $DataLicense
-	SPDXID: $SPDXID
-	DocumentName: $DocumentName
-	DocumentNamespace: $DocumentNamespace
-	Creator: $CreatorType: $Creator
-	Created: $Created
-	CreatorComment: $CreatorComment
+SPDXVersion: $SPDXVersion
+DataLicense: $DataLicense
+SPDXID: $SPDXID
+DocumentName: $DocumentName
+DocumentNamespace: $DocumentNamespace
+$Creator
+Created: $Created
+$CreatorComment
       </div>
       <div class="pcomponent">
 	## Packages
@@ -849,8 +848,8 @@
 	  <timestamp>$Created</timestamp>
 	  <authors>
 	    <author>
-              <name>$Creator</name>
-              <email></email>
+              <name>$Creator-Person</name>
+              <email>$Creator-Email</email>
 	    </author>
 	  </authors>
 	  <component type="application" bom-ref="$BomRef">
@@ -866,9 +865,14 @@
               <email></email>
 	    </contact>
 	  </manufacture>
+	  <tool>
+	    <name>
+	      $Creator-Tool
+	    </name>
+	  </tool>
 	  <supplier>
 	    <name>
-	      $SupplierName
+	      $Creator-Organization
 	    </name>
 	  </supplier>
 	</metadata>

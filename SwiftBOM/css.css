@@ -36,6 +36,9 @@
 .table th {
     border-top: none;
 }
+.creatortable td {
+    border-top: none;
+}
 #anouncer {
     position:absolute;
     display:none;
