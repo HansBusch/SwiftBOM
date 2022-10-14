@@ -1175,8 +1175,10 @@ function safeJSON(inText) {
 	if (typeof inText === "object") {
 		var txt = ''
 		Object.keys(inText).forEach(function (type) { 
-			if (txt.length>0) txt += ',\n'
-			if (inText[type].length) txt += '"'+type+'": "'+inText[type]+'"'
+			if (inText[type].length) {
+				if (txt.length>0) txt += ',\n'
+				txt += '"'+type+'": "'+inText[type]+'"'
+			}
 		})
 		return '{'+txt+'}'
 	}
@@ -1304,6 +1306,8 @@ function generate_spdx() {
     var PrimaryPackageName = hkey['PackageName']
     var PrimaryID = hkey['SPDXID']
 	var PrimaryBomRef = PrimaryID.replace(/SPDXRef-/, '') 
+    var test  = JSON.stringify(spdxJson)
+			  .replace(/\"\$([A-Za-z0-9]+)\"/gi, (_,x) => safeJSON(hkey[x]))
     spdxJson = JSON.parse(JSON.stringify(spdxJson)
 			  .replace(/\"\$([A-Za-z0-9]+)\"/gi, (_,x) => safeJSON(hkey[x])))
     var swidpcmp = $('#swid .pcmp').val()
