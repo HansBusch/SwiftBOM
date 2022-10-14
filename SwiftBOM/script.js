@@ -1111,9 +1111,11 @@ function add_cmp(mclass) {
 function rm_cmp(w) {
     $(w).closest('table').remove()
 }
-function add_invalid_feedback(xel,msg) {
+function clear_invalid_feedback() {
     $('.invalid-feedback').remove()
     $('.valid-feedback').remove()    
+}
+function add_invalid_feedback(xel,msg) {
     if(msg == "")
 	msg = 'Please provide valid data for '+$(xel).attr('name')
     var err = $('<div>').html(msg)
@@ -1131,30 +1133,32 @@ function add_valid_feedback(xel,msg) {
     $(gdg).addClass('valid-feedback').show()
 }
 function verify_inputs() {
+	clear_invalid_feedback()
+	var ok = true;
     var inputs=$('#main_table :input').not('button')
     for (var i=0; i< inputs.length; i++) {
 	if(!$(inputs[i]).val()) {
 	    if(!$(inputs[i]).hasClass("not_required")) {
 		add_invalid_feedback(inputs[i],"")
-		return false
+		ok = false
 	    }
 	} else {
 	    if($(inputs[i])[0].type == "datetime-local") {
 		/* Not really necessary but we will do to be safe */
 		if(isNaN(parseInt(new Date($(inputs[i])[0].value).getTime()))) {
 		    add_invalid_feedback(inputs[i],"")
-		    return false
+		    ok = false
 		}
 	    }
 	    else if(!$(inputs[i])[0].checkValidity()) {
 		if($(inputs[i])[0].value.toUpperCase() in DefaultEmpty)
 		    return true
 		add_invalid_feedback(inputs[i],"")
-		return false
+		ok = false
 	    }
 	}
     }
-    return true
+    return ok
 }
 function safeXML(inText) {
     return inText.replace(/[&<>"'`=]/g, function (s) {
@@ -1844,6 +1848,7 @@ function add_heatmap(cvss_score) {
     }
 }
 function simulate_vuls() {
+	clear_invalid_feedback()
     $('.invalid-feedback').remove();
     var pratio = parseFloat($('#pratio').val());
     var vul_rows = $('#vul_table .vul_template').not('.d-none');
