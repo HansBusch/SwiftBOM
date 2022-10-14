@@ -1705,7 +1705,7 @@ function showdiv(d) {
     if('Created' in props)
 	addons = '<br>Created on:'+props.Created
     if('Creator' in props)
-	addons += '<br>Created by:'+props.Creator
+	addons += '<br>Created by:'+(props.Creator.Person.length ? props.Creator.Person : props.Creator.Organization)
     if('CreatorComment' in props)
 	addons += '<br>Comments:'+props.CreatorComment
     if(('ExternalReference' in props) && ($('#c-'+props.ExternalReference).length > 0)) {
