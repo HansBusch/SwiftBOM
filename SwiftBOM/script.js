@@ -872,7 +872,10 @@ function parse_spdx(spdxin, mcurrent_rowid, primaryOnly, fPid) {
   clen = $(".cmp_table").length
   if (mcurrent_rowid) {
   // add primary plus optionally all dependent
-	  if (primaryOnly) plen = 0
+	  if (primaryOnly) {
+		  plen = 0
+		  khash["CRelationship"] = [khash['CRelationship'][0] ]
+	  }
 	  else plen += mcurrent_rowid
   }
   for (var i = mcurrent_rowid; i < plen; i++) {
@@ -923,14 +926,6 @@ function parse_spdx(spdxin, mcurrent_rowid, primaryOnly, fPid) {
   }
 }
 function update_relationships_psuedo(cmps, base) {
-  if ((typeof(khash.CRelationship) != "undefined") &&
-    (cmps.length < base+khash["CRelationship"].length)) {
-    console.log("Relationship could not be updated")
-    console.log(cmps)
-    swal("Relationship mismatch", "SPDX data on component relationships are not matching" +
-      ", may require a manual check", "warning")
-    return false
-  }
   if ("RelationshipExternal" in khash) {
     var external_count = khash["RelationshipExternal"].length
       for (var i = 0; i < external_count; i++) {
@@ -953,11 +948,14 @@ function update_relationships_psuedo(cmps, base) {
 		if (typeof(kr[i]) != "undefined") {
 			var parts = kr[i].split(/\s+/)
 			var componentid = $("table[data-spdxid='" + parts[0] + "']").attr("id")
-			console.log(componentid, parts[0])
 			if (componentid)
 				$(cmps[i+base]).find(".ParentComponent").val(componentid)
+			else 
+			  swal("Error resolving relationship",
+				"Cannot resolve " + kr[i],
+				"warning")
 		}
-    }
+	}
   }
   $('[name="PackageName"]').trigger('change')
 }
