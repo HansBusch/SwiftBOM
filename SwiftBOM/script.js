@@ -888,7 +888,7 @@ function parse_spdx(spdxin, mcurrent_rowid, primaryOnly, fPid) {
       if (scmps.length > 0)
         fill_component(scmps, i)
   }
-  update_relationships_psuedo(cmps)
+  update_relationships_psuedo(cmps, mcurrent_rowid)
   if (fPid) {
     /* We have a parent iFrame update the table there with the primary component
     data and show the button */
@@ -922,9 +922,9 @@ function parse_spdx(spdxin, mcurrent_rowid, primaryOnly, fPid) {
       self.parent.window.$('#' + fPid).find(".ExtReferencePayload").html(externalInfo)
   }
 }
-function update_relationships_psuedo(cmps) {
+function update_relationships_psuedo(cmps, base) {
   if ((typeof(khash.CRelationship) != "undefined") &&
-    (cmps.length != khash["CRelationship"].length)) {
+    (cmps.length < base+khash["CRelationship"].length)) {
     console.log("Relationship could not be updated")
     console.log(cmps)
     swal("Relationship mismatch", "SPDX data on component relationships are not matching" +
@@ -948,12 +948,15 @@ function update_relationships_psuedo(cmps) {
         "warning")
   }
  if (typeof(khash.CRelationship) != "undefined") {
-	for (var i = 1; i < cmps.length; i++) {
-    var parts = khash["CRelationship"][i].split(/\s+/)
-      var componentid = $("table[data-spdxid='" + parts[0] + "']").attr("id")
-      console.log(componentid, parts[0])
-      if (componentid)
-        $(cmps[i]).find(".ParentComponent").val(componentid)
+	var kr = khash["CRelationship"]
+	for (var i = 0; i < kr.length; i++) {
+		if (typeof(kr[i]) != "undefined") {
+			var parts = kr[i].split(/\s+/)
+			var componentid = $("table[data-spdxid='" + parts[0] + "']").attr("id")
+			console.log(componentid, parts[0])
+			if (componentid)
+				$(cmps[i+base]).find(".ParentComponent").val(componentid)
+		}
     }
   }
   $('[name="PackageName"]').trigger('change')
@@ -2205,7 +2208,7 @@ function FillFromExcel(dexcel) {
 	if(scmps.length > 0) 
 	    fill_component(scmps,i)
     }
-    update_relationships_psuedo(cmps)
+    update_relationships_psuedo(cmps, 0)
 }
 
 function triggerDownload (dataURI,fname,el) {
