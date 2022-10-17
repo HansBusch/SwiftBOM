@@ -732,9 +732,9 @@ function recurse_remove(componentId) {
 function do_example() {
     $('#main_table .cmp_table').remove()
     $('#main_table .nmk').remove()
-    add_cmp()
+	add_cmp()
     var inputs = $('#main_table :input').not('select').not('.spdx-lite-field').not('.prefill')
-    inputs.map(i => inputs[i].value = inputs[i].placeholder)
+    inputs.map(i => inputs[i].value = inputs[i].name == 'SPDXID' ? "SPDXRef-"+generate_uuid() : inputs[i].placeholder)
     /* Do checksum prefil */
     $('.ChecksumType').val("Package")
     $('.ChecksumAlgorithm').val("SHA256")
@@ -748,7 +748,7 @@ function do_example() {
     var sample_array=[{PackageName:"Windows Embedded Standard 7 with SP1 patches",
 		       PackageFileName: "MS-Windows-7-tr.iso", Checksumv: sha256(Math.random()),
 		       ChecksumType: "Package",ChecksumAlgorithm: "SHA256",
-		       PackageVersion:"3.0", SupplierName:"Microsoft"},
+		       PackageVersion:"3.0", SupplierName:"Microsoft", SPDXID:"8795cf43-7004-8540-132f-c6a52339c419"},
 		      {PackageName:"SQL 2005 Express", PackageVersion:"9.00.5000.00,SP4",
 		       ChecksumType: "File",ChecksumAlgorithm: "SHA256",		       
 		       FileName: "SQL-2005-Express.msi",Checksumv:sha256(Math.random()),
@@ -1166,6 +1166,7 @@ function verify_inputs() {
     return ok
 }
 function safeXML(inText) {
+	if (typeof inText == "undefined") return '""'
     return inText.replace(/[&<>"'`=]/g, function (s) {
 	return "&#" + s.charCodeAt(0) + ";";
     })
@@ -1282,7 +1283,7 @@ function generate_spdx() {
 	hkey['Creator'] = {'Organization': $('#Creator-Organization').val(),
 	'Person': $('#Creator-Person').val(),
 	'Tool': $('#Creator-Tool').val()}
-    spdx += thead.replace(/\$([A-Za-z0-9]+)/gi, (_,x) => safeSPDX(x, hkey[x]))
+    spdx += thead.replace(/\$([-A-Za-z0-9]+)/gi, (_,x) => safeSPDX(x, hkey[x]))
     hinputs = $('.pcmp_table tr :input')
     var pc = {}
     hinputs.map(i => {
@@ -1309,7 +1310,7 @@ function generate_spdx() {
     var test  = JSON.stringify(spdxJson)
 			  .replace(/\"\$([A-Za-z0-9]+)\"/gi, (_,x) => safeJSON(hkey[x]))
     spdxJson = JSON.parse(JSON.stringify(spdxJson)
-			  .replace(/\"\$([A-Za-z0-9]+)\"/gi, (_,x) => safeJSON(hkey[x])))
+			  .replace(/\"\$([-A-Za-z0-9]+)\"/gi, (_,x) => safeJSON(hkey[x])))
     var swidpcmp = $('#swid .pcmp').val()
 	.replace(/\$([A-Za-z0-9]+)/gi, (_,x) => hkey[x])
     var cyclonedxcmp = $('#cyclonedx .cyclonedxpcmp').val()
@@ -1324,7 +1325,7 @@ function generate_spdx() {
 		      children:[]})
     swid += swidpcmp
     cyclonedx += cyclonedxcmp 
-    spdx += tpcmp.replace(/\$([A-Za-z0-9]+)/gi, (_,x) => safeSPDX(x, hkey[x]))
+    spdx += tpcmp.replace(/\$([-A-Za-z0-9]+)/gi, (_,x) => safeSPDX(x, hkey[x]))
     spdx += spdx_lite_content($('.pcmp_table .spdx-lite-field'),hkey)
     var spdxpkg = JSON.parse(JSON
 			     .stringify($packages)
@@ -1880,6 +1881,7 @@ function add_heatmap(cvss_score) {
     }
 }
 function simulate_vuls() {
+	return;
 	clear_invalid_feedback()
     $('.invalid-feedback').remove();
     var pratio = parseFloat($('#pratio').val());

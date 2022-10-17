@@ -200,7 +200,7 @@
 	    </tr>
 	    <tr style="display:none" class="thead">
 	      <td>SPDXID</td>
-	      <td><input class="form-control has-default" type="text" name="SPDXID" 
+	      <td><input class="form-control has-default" type="text" name="Document-SPDXID" 
 			 value="SPDXRef-DOCUMENT"
 			 placeholder="SPDXRef-DOCUMENT">
 	      </td>
@@ -272,7 +272,7 @@
 		      <td>Component Name
 			<br />
 			<input type="hidden" name="SPDXID"
-			class="not_required">
+			class="not_required" id="PrimaryID">
 			<input type="checkbox" class="check_cpe not_required"
 			       onchange="use_cpe(this)"/>
 			<a class="text-small" href="javascript:void(0)"
@@ -781,7 +781,7 @@
       <div class="head">## Document Header
 SPDXVersion: $SPDXVersion
 DataLicense: $DataLicense
-SPDXID: $SPDXID
+SPDXID: $Document-SPDXID
 DocumentName: $DocumentName
 DocumentNamespace: $DocumentNamespace
 $Creator
@@ -797,7 +797,7 @@ $CreatorComment
 	ExternalRef: PACKAGE-MANAGER purl pkg:supplier/$UrlSupplierName/$UrlPackageName@$PackageVersion
 	PackageVersion: $PackageVersion
 	PackageSupplier: $SupplierType: $SupplierName
-	Relationship: $ParentID DESCRIBES $SPDXID
+	Relationship: $Document-SPDXID DESCRIBES $SPDXID
 	Relationship: $SPDXID CONTAINS NONE
 	PackageDownloadLocation: $PackageDownloadLocation
 	FilesAnalyzed: $FilesAnalyzed
