@@ -609,13 +609,13 @@ function readFile(input,mchild) {
     }
     if (file.name.toLowerCase().endsWith(".xlsx") ||
 	file.name.toLowerCase().endsWith(".xls")) {
-	console.log("Excel")
-	var xl2json = new ExcelToJSON()
-	xl2json.parseExcel(file)
-	swal("Experimental!", "Excel file upload, Please update relationship"+
-	     " before generating SBOM!",
-	     "warning")
-	return
+		console.log("Excel")
+		var xl2json = new ExcelToJSON()
+		xl2json.parseExcel(file)
+		swal("Experimental!", "Excel file upload, Please update relationship"+
+			 " before generating SBOM!",
+			 "warning")
+		return
     }
     var reader = new FileReader()
     reader.readAsText(file);
@@ -623,61 +623,10 @@ function readFile(input,mchild) {
 	//console.log(reader.result);
 	//sessionStorage.setItem("reader",reader.result)
 	if(mchild == "childbom") {
-	    //swal("Experimental!", "Child bom has been loaded!",
-	    //"warning")
+	    var mcurrent_rowid = parseInt($(input).closest('table').prop("id").replace("Component", ""))
+		parse_spdx(reader.result, mcurrent_rowid, $('.cbomfileExternal').is(':checked'), false)
 	    clear_vuls()
-	    var qt = $(input).closest('table')
-	    if($('.cbomfileExternal').is(':checked')) {
-		var cfPid = qt.attr("id")
-		var cframeId = "c-"+cfPid
-		var cloneFrame = $('.cframeTemplate').clone()
-		$('#'+cframeId).remove()
-		var cframe = $('.cframeTemplate').attr("id",cframeId).
-		    removeClass('cframeTemplate')
-		/* save a cloned frame for next Embed event*/
-		cframe.before(cloneFrame)
-		var parentsTitle = $('#PrimaryComponent').find('[name="PackageName"]').val()
-		cframe.find('.parentTitle').html(parentsTitle)
-		var ciFrame = $('#'+cframeId).find(".iframeTemplate").attr("name",cframeId)
-		var zIndexBase = parseInt($("#scontent").css("z-index"))
-		cframe.css({'z-index': zIndexBase + $('.coverpage').length*10})
-		var cWindow = ciFrame[0].contentWindow
-		/* New method uses iframe postMessage*/
-		cWindow.postMessage({childSPDX:reader.result,parentcId:cfPid})
-		/* Legacy method for sending data to child frame 
-		   ciFrame.attr("onload",function() {
-		   cWindow.tempValue = reader.result
-		   cWindow.tempId = cfPid
-		   //parse_spdx(reader.result,null,false,false)
-		   })
-		*/
-		//$('#'+cframeId).find(".iframeTemplate")[0].contentWindow
-		
-		/* 
-		   setTimeout(function() {
-		   cWindow.parse_spdx(reader.result,null,false,false) }, 4000)
-		*/
 		return
-	    }
-	    if($(qt).find(".PackageName").val()  != "") {
-		swal({
-		    title: "Are you sure?",
-		    text: "Adding a childbom as NOT External Reference will "+
-			"replace the current component and all its child components "+
-			" of this element!",
-		    icon: "warning",
-		    buttons: true,
-		    dangerMode: true,
-		}).then((willDelete) => {
-		    if (willDelete) {
-			var componentId = qt.attr("id")
-			recurse_remove(componentId)
-			parse_spdx(reader.result,mchild,input,false)
-		    } else {
-			swal("Your SBOM is left as is!");
-		    }
-		});
-	    }	
 	} else {
 	    var fnames = file.name.toLowerCase()
 	    if(fnames == "package.json") {
@@ -802,16 +751,12 @@ function do_example() {
     $('#vuls').removeClass('d-none')
 }
 var khash = {}
-function parse_spdx(spdxin, mchild, input, fPid) {
+function parse_spdx(spdxin, mcurrent_rowid, primaryOnly, fPid) {
   if (spdxin == "")
     spdxin = $('#spdxtag').text();
   /* This is filled if there is a childbom being inserted  with class mclass*/
-  var mcurrent_rowid = 0
   var mclass = ""
-  if (mchild == "childbom") {
-    console.log("Trying Child bom")
-    mcurrent_rowid = parseInt($(input).closest('table').prop("id").replace("Component", ""))
-      console.log(mcurrent_rowid)
+  if (mcurrent_rowid) {
       mclass = "childbom"
   }
   khash = {}
@@ -908,8 +853,8 @@ function parse_spdx(spdxin, mchild, input, fPid) {
             field.value = khash[field.name][0] || ""
 		}
       }
+	check_org()
   }
-  check_org()
 
   var plen = khash["PackageName"].length
   /* Create empty array for supplier name and supplier type comes from
@@ -925,43 +870,21 @@ function parse_spdx(spdxin, mchild, input, fPid) {
   var pIndex = 0
   /* Default components to fill starts with 0 unless a child bom is selected */
   clen = $(".cmp_table").length
-
-  for (var i = 0; i < plen; i++) {
-//    if (khash["CRelationship"][i] != undefined && khash["CRelationship"][i].indexOf(' DESCRIBES ') > -1) {
-//        pIndex = i
-//	}
+  if (mcurrent_rowid) {
+  // add primary plus optionally all dependent
+	  if (primaryOnly) plen = 0
+	  else plen += mcurrent_rowid
+  }
+  for (var i = mcurrent_rowid; i < plen; i++) {
     if (i >= clen)
       add_cmp(mclass)
   }
   /* SPDXID */
-  var cmps = $('#main_table .cmp_table')
-  console.log(mcurrent_rowid)
-  if (mcurrent_rowid > 0) {
-    /* Child BOM is true , process this for current field */
-    console.log(mcurrent_rowid, pIndex)
-    $('#Component' + mcurrent_rowid).attr("data-spdxid", khash["SPDXID"][pIndex])
-    var bcmps = $('#Component' + mcurrent_rowid + ' :input')
-      cmps = $('#main_table .cmp_table.childbom')
-      fill_component(bcmps, pIndex)
-      /* Remove the parent SPDXID of this as the one for the full document */
-      khash["PSPDXID"] = "DEFAULT"
-  } else {
-    /* No child bom involved, fill the primary component with pindex element */
-    $('#main_table .pcmp_table').attr("data-spdxid", khash["SPDXID"][pIndex])
-    var pcmps = $('#main_table .pcmp_table :input')
-      fill_component(pcmps, pIndex)
-  }
-  /* Remove the primary Index Element from SPDXID References */
-  var jkeys = Object.keys(khash)
-  for (var j = 0; j < jkeys.length; j++) {
-    if (Array.isArray(khash[jkeys[j]]))
-      khash[jkeys[j]].splice(pIndex, 1)
-  }
-
-  //console.log(pIndex)
+  var cmps = $('#main_table .pcmp_table, #main_table .cmp_table')
   for (var i = 0; i < khash["SPDXID"].length; i++) {
-    $(cmps[i]).attr("data-spdxid", khash["SPDXID"][i])
-    var scmps = $(cmps[i]).find(":input")
+	var cmp = $(cmps[i+mcurrent_rowid])
+    cmp.attr("data-spdxid", khash["SPDXID"][i])
+    var scmps = cmp.find(":input")
       if (scmps.length > 0)
         fill_component(scmps, i)
   }
@@ -1024,12 +947,14 @@ function update_relationships_psuedo(cmps) {
         " Child BOM feature to add external SPDX references. ",
         "warning")
   }
-  for (var i = 0; i < cmps.length; i++) {
+ if (typeof(khash.CRelationship) != "undefined") {
+	for (var i = 1; i < cmps.length; i++) {
     var parts = khash["CRelationship"][i].split(/\s+/)
       var componentid = $("table[data-spdxid='" + parts[0] + "']").attr("id")
       console.log(componentid, parts[0])
       if (componentid)
         $(cmps[i]).find(".ParentComponent").val(componentid)
+    }
   }
   $('[name="PackageName"]').trigger('change')
 }
