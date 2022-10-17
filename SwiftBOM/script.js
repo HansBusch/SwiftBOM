@@ -875,13 +875,11 @@ function parse_spdx(spdxin, mchild, input, fPid) {
   if (mcurrent_rowid == 0) {
     /* Process the head as normal */
     var headkeys = $('#main_table .thead :input').not(".has-default")
-	var creator = 0;
 
       for (var i = 0; i < headkeys.length; i++) {
         var field = headkeys[i]
 		if (field.name.startsWith('Creator')) {
 			if (khash[field.name] != undefined) {
-				creator = 1;
 				field.value = khash[field.name][0] || ""
 			}
 		}
@@ -911,7 +909,7 @@ function parse_spdx(spdxin, mchild, input, fPid) {
 		}
       }
   }
-  if (!creator) swal("Data Error", "Data does not contain required field Creator", "error")
+  check_org()
 
   var plen = khash["PackageName"].length
   /* Create empty array for supplier name and supplier type comes from
@@ -2864,4 +2862,10 @@ function pip_tree(pjson,mparent,crawl) {
 			     }
 			 }) 
     }
+}
+function check_org()
+{
+	var empty = $('#Creator-Person').val() == ''
+	if (empty) $('#Creator-Organization').removeClass('not_required')
+	else $('#Creator-Organization').addClass('not_required')
 }
