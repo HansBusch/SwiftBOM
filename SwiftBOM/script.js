@@ -1227,7 +1227,6 @@ function generate_spdx() {
 	hkey['Creator-Tool'] = hkey['Creator']['Tool'];
     hkey['UrlSupplierName'] = encodeURIComponent(hkey['SupplierName'])
     hkey['UrlPackageName'] = encodeURIComponent(hkey['PackageName'])
-    hkey['ParentID'] = packageID
     var PrimaryPackageName = hkey['PackageName']
     var PrimaryID = hkey['SPDXID']
 	var PrimaryBomRef = PrimaryID.replace(/SPDXRef-/, '') 
@@ -1277,7 +1276,7 @@ function generate_spdx() {
     spdxJson['packages'].push(spdxpkg)
     var relkey = {RelType:"DESCRIBES",
 		  RelChild:hkey['SPDXID'],
-		  RelParent:hkey['SPDXID']}
+		  RelParent:hkey['Document-SPDXID']}
     var spdxrel = JSON.parse(JSON
 			     .stringify($relationships)
 			     .replace(/\$([A-Za-z0-9]+)/gi, (_,x) => relkey[x]))
