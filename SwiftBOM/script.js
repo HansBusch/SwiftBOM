@@ -1284,13 +1284,6 @@ function generate_spdx() {
     //console.log(spdx)
     /* Add option spdx_lite_fields */
     spdxJson['relationships'].push(spdxrel)
-    relkey = {RelType:"CONTAINS",
-	      RelChild:"NONE",
-	      RelParent:hkey['SPDXID']}
-    spdxrel = JSON.parse(JSON
-			 .stringify($relationships)
-			 .replace(/\"\$([A-Za-z0-9]+)\"/gi, (_,x) => safeJSON(relkey[x])))
-    spdxJson['relationships'].push(spdxrel)
     cyclonedxJson['components'] = []
     cyclonedxdeps = ''
     populate_dependencies(PrimaryBomRef,"PrimaryComponent")
@@ -1392,13 +1385,6 @@ function generate_spdx() {
 					 .replace(/\"\$([A-Za-z0-9]+)\"/gi,
 						  (_,x) => safeJSON(relkey[x])))
 		spdxJson['relationships'].push(spdxrel)
-		relkey = {RelType:"CONTAINS",
-			  RelChild:"NOASSERTION",
-			  RelParent:hkey['SPDXID']}
-		spdxrel = JSON.parse(JSON.stringify($relationships)
-					 .replace(/\"\$([A-Za-z0-9]+)\"/gi,
-						  (_,x) => safeJSON(relkey[x])))
-		spdxJson['relationships'].push(spdxrel)	
 	}
     spdx += tpcmps
     swid += swidcmps+swidTail

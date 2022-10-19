@@ -430,6 +430,14 @@
 				  data-default="NOASSERTION">NOASSERTION</textarea>
 		      </td>
 		    </tr>
+		    <tr class="spdx-lite d-none">
+		      <td>Source information</td>
+		      <td>
+				<input class="form-control not_required spdx-lite-field" type="text"
+			       name="PackageSourceInfo" 
+				   placeholder="Source.cpp modified, only sh256.cpp">
+			  </td>
+		    </tr>
 
                     <tr class="spdx-lite d-none">
 		      <td>License Identifier</td>
@@ -705,7 +713,15 @@
 			  data-default="NOASSERTION">NOASSERTION</textarea>
 	      </td>
 	    </tr>
-            <tr class="spdx-lite d-none">
+		<tr class="spdx-lite d-none">
+		  <td>Source information</td>
+		  <td>
+		<input class="form-control not_required spdx-lite-field" type="text"
+			   name="PackageSourceInfo" 
+			   placeholder="Source.cpp modified, only sh256.cpp">
+		  </td>
+		</tr>
+        <tr class="spdx-lite d-none">
 	      <td>License Identifier</td>
 	      <td>
 		<!--  letters, numbers, . and/or -.  -->
@@ -778,7 +794,6 @@ $CreatorComment
 	PackageVersion: $PackageVersion
 	PackageSupplier: $SupplierType: $SupplierName
 	Relationship: $Document-SPDXID DESCRIBES $SPDXID
-	Relationship: $SPDXID CONTAINS NONE
 	PackageDownloadLocation: $PackageDownloadLocation
 	FilesAnalyzed: $FilesAnalyzed
 	PackageLicenseConcluded: $PackageLicenseConcluded
@@ -795,7 +810,6 @@ $CreatorComment
 	PackageVersion: $PackageVersion
 	PackageSupplier: $SupplierType: $SupplierName
 	Relationship: $ParentID CONTAINS $SPDXID
-	Relationship: $SPDXID CONTAINS NOASSERTION	
 	PackageDownloadLocation: $PackageDownloadLocation
 	FilesAnalyzed: $FilesAnalyzed
 	PackageLicenseConcluded: $PackageLicenseConcluded
