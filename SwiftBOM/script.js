@@ -792,14 +792,11 @@ function parse_spdx(spdxin, mcurrent_rowid, primaryOnly, fPid) {
 	}
 	if (key == "SPDXID" && components < 0) khash['Document-SPDXID'] = val;
     else if (key == "Relationship") {
-      /* Modify this key to capture "relationship" matchmaking problems*/
-      if (val.indexOf("CONTAINS NO") > -1) {
-        key = "RelationshipNONE"
-          if (val.indexOf("CONTAINS NOASSERTION") > -1)
-            key = "RelationshipNOASSERTION"
-      } else if (val.indexOf("CONTAINS Document") > -1) {
-        key = "RelationshipExternal"
-      }
+      if (val.indexOf("CONTAINS") > -1 || val.indexOf("DEPENDS_ON") > -1) {
+        if (!(key in khash)) khash[key] = []
+	    khash[key].push(val)
+	  }
+	  continue;
     }
 	else if (key == "Creator") {
 	  var items = lines[i].trim().split(':')	
@@ -862,10 +859,7 @@ function parse_spdx(spdxin, mcurrent_rowid, primaryOnly, fPid) {
   variables */
   khash['SupplierType'] = Array(plen).fill("Organization")
   khash['SupplierName'] = Array(plen)
-  khash["CRelationship"] = khash['Relationship']
-  khash['Relationship'] = Array(plen).fill("Included")
   khash['ParentComponent'] = Array(plen).fill("PrimaryComponent")
-  khash['Relationship'][0] = 'Primary'
   /* Default primary component index is 0, search for DESCRIBES  */
   var pIndex = 0
   /* Default components to fill starts with 0 unless a child bom is selected */
@@ -874,7 +868,7 @@ function parse_spdx(spdxin, mcurrent_rowid, primaryOnly, fPid) {
   // add primary plus optionally all dependent
 	  if (primaryOnly) {
 		  plen = 0
-		  khash["CRelationship"] = [khash['CRelationship'][0] ]
+		  khash["Relationship"] = [khash['Relationship'][0] ]
 	  }
 	  else plen += mcurrent_rowid
   }
@@ -891,7 +885,7 @@ function parse_spdx(spdxin, mcurrent_rowid, primaryOnly, fPid) {
       if (scmps.length > 0)
         fill_component(scmps, i)
   }
-  update_relationships_psuedo(cmps, mcurrent_rowid)
+  update_relationships(mcurrent_rowid)
   if (fPid) {
     /* We have a parent iFrame update the table there with the primary component
     data and show the button */
@@ -925,35 +919,22 @@ function parse_spdx(spdxin, mcurrent_rowid, primaryOnly, fPid) {
       self.parent.window.$('#' + fPid).find(".ExtReferencePayload").html(externalInfo)
   }
 }
-function update_relationships_psuedo(cmps, base) {
-  if ("RelationshipExternal" in khash) {
-    var external_count = khash["RelationshipExternal"].length
-      for (var i = 0; i < external_count; i++) {
-        var kExt = khash["RelationshipExternal"][i].replace(/^\s+/, '').split(/\s+/)
-          var tExt = $("table[data-spdxid='" + kExt[0] + "']")
-          if (tExt.length == 1) {
-            tExt.find('.cbomenable').click()
-            tExt.find('.cbomfileExternal').click()
-          }
-      }
-      swal("External Relationships detected!",
-        "SPDX data on component relationships that may require additional [" +
-        String(khash["RelationshipExternal"].length) + "] SPDX document(s). \nUse" +
-        " Child BOM feature to add external SPDX references. ",
-        "warning")
-  }
- if (typeof(khash.CRelationship) != "undefined") {
-	var kr = khash["CRelationship"]
+function update_relationships(base) {
+ if (typeof(khash.Relationship) != "undefined") {
+	var kr = khash["Relationship"]
 	for (var i = 0; i < kr.length; i++) {
 		if (typeof(kr[i]) != "undefined") {
 			var parts = kr[i].split(/\s+/)
-			var componentid = $("table[data-spdxid='" + parts[0] + "']").attr("id")
-			if (componentid)
-				$(cmps[i+base]).find(".ParentComponent").val(componentid)
-			else 
-			  swal("Error resolving relationship",
-				"Cannot resolve " + kr[i],
-				"warning")
+			if (parts.length == 3 && !parts[2].startsWith('NO')) {
+			  var c1 = $("table[data-spdxid='" + parts[0] + "']").attr("id")
+			  var c2 = $("table[data-spdxid='" + parts[2] + "']").attr("id")
+			  if (c1 && c2)
+			  	$('#'+c2).find(".ParentComponent").val(c1)
+			  else 
+			    swal("Error resolving relationship",
+			  	"Cannot resolve " + kr[i],
+			  	"warning")
+			}
 		}
 	}
   }
@@ -2150,8 +2131,6 @@ function FillFromExcel(dexcel) {
     /* Create empty array for supplier name and supplier type comes from 
        PackageSupplier: $SupplierType: $SupplierName 
        variables */
-    khash["CRelationship"] = khash['Relationship']
-    khash['Relationship'] = Array(plen).fill("Included")
     khash['ParentComponent'] = Array(plen).fill("PrimaryComponent")
     khash['Relationship'][0] = 'Primary'
     khash['PackageSupplier'] = khash['SupplierType'].map(function(x,i) {
@@ -2191,7 +2170,7 @@ function FillFromExcel(dexcel) {
 	if(scmps.length > 0) 
 	    fill_component(scmps,i)
     }
-    update_relationships_psuedo(cmps, 0)
+    update_relationships(0)
 }
 
 function triggerDownload (dataURI,fname,el) {
