@@ -270,22 +270,7 @@
 
 		    <tr>
 		      <td>Component Name
-			<br />
 			<input type="hidden" name="SPDXID"
-			class="not_required" id="PrimaryID">
-			<input type="checkbox" class="check_cpe not_required"
-			       onchange="use_cpe(this)"/>
-			<a class="text-small" href="javascript:void(0)"
-			   title="Use CPE for Vulnerability CVE lookup" 
-			   onclick="$(this).prev().click()">
-			  Use CPE
-			</a>
-			<!--
-			    <a href="https://nvd.nist.gov/products/cpe"
-			       title="Use CPE to lookup vulnerability from CVE data"
-			       target="_blank" class="circletext">
-			      ?</a> 
-			    -->
 		      </td>
 		      <td>
 			<input class="form-control PackageName noCPE" type="text"
@@ -579,16 +564,7 @@
 	      </td>
 	    </tr>
 	    <tr> 
-	      <td>Component Name
-		<br/>
-		<input type="checkbox" class="check_cpe not_required"
-		       onchange="use_cpe(this)"/>
-		<a class="text-small" href="javascript:void(0)"
-		   title="Use CPE for vulnerability CVE lookup" 
-		   onclick="$(this).prev().click()">
-		  CPE
-		</a>		
-	      </td>
+	      <td>Component Name</td>
 	      <td>
 		<div class="PackageNameCPE CPE d-none"></div>
 		<input class="form-control PackageName noCPE" type="text"

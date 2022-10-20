@@ -459,44 +459,6 @@ function get_products(m,w) {
 	});
     })
 }
-function use_cpe(w) {
-    var wtable = $(w).closest('table')
-    if($(w).is(':checked')) {
-	/* True use CPE */
-	if($('#anouncer').data("shown") != 1) {
-	    $('#anouncer').html("When using CPE select <b>Supplier Name</b> from dropdown and then <b>Component Name</b> and then <b>Version</b>")
-	    $('#anouncer').show().delay(5000).fadeOut()
-	}
-	wtable.find('.SupplierName').addClass("d-none")
-	wtable.find('.SupplierNameCPE').removeClass("d-none")
-	var ms = wtable.find('.SupplierNameCPE')
-	    .magicSuggest({placeholder: 'Supplier CPE names',
-			   cls: 'SupplierNameCPE CPE',
-			   inputCfg: {'class':'not_required'},
-			   allowFreeEntries: true,
-			   maxSelection: 1,
-			   data:cpe_data})
-	$(ms).on('selectionchange', function(_e,_m,r){
-	    wtable.find(".PackageNameCPE").remove()
-	    wtable.find(".PackageName").after('<div class="PackageNameCPE"/>')
-	    if(r.length == 1) {
-		if(cpe_data.findIndex(x => x == r[0]['name']) > -1)
-		    get_products(r[0]['name'],w)
-		else
-		    wtable.find(".PackageName").removeClass("d-none")
-		wtable.find('.SupplierName').val(r[0]['name'])
-	    } else {
-		console.log("Clear")
-		wtable.find(".PackageName").removeClass("d-none")
-	    }
-	});
-    } else {
-	/* False dont use CPE*/
-	wtable.find('.noCPE').removeClass("d-none")
-	wtable.find('.CPE').addClass("d-none")	
-    }
-}
-
 
 document.onkeydown = function(evt) {
     evt = evt || window.event;
