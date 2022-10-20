@@ -305,15 +305,36 @@
 		    <tr>
 		      <td>Supplier Name</td>
 		      <td>
+			  <div class="mline">
 			<select name="SupplierType" class="form-control mauto SupplierType not_required">
 			  <option>Organization</option>
 			  <option>Person</option>
 			  <option>Tool</option>			  
 			</select>
-			<input class="form-control mauto SupplierName noCPE" type="text"
+			<input class="form-control mlast SupplierName noCPE" type="text"
 			       placeholder="ACME" name="SupplierName">
 			<div class="SupplierNameCPE CPE d-none"></div>
+			</div>
 		      </td>
+		    </tr>
+			<tr>
+		      <td>External Reference</td>
+		      <td>
+			  <div class="mline">
+			<select name="ExternalRefType" class="form-control mauto ExternalRefType not_required">
+			  <option>cpe22</option>
+			  <option>cpe23</option>
+			  <option>purl</option>
+			  <option>maven</option>
+			  <option>npm</option>
+			  <option>nuget</option>
+			  <option>bower</option>
+			  <option>other</option>
+			</select>
+			<input class="form-control mlast not_required" type="text"
+			       name="ExternalRef" data-required="0"
+			       value=""  placeholder="cpe:&sol;a:acme:infusion:1.0">
+		      </div></td>
 		    </tr>
 		    <tr class="spdx-lite d-none">
 		      <td>Package File Name</td>
@@ -588,17 +609,36 @@
 	    <tr>
 	      <td>Supplier Name</td>
 	      <td>
-		<select name="SupplierType" class="form-control mauto SupplierType">
-		  <option>Organization</option>
-		  <option>Person</option>
-		  <option>Tool</option>		  
-		</select>
-		<div class="SupplierNameCPE CPE d-none"></div>
-		<input class="form-control mauto SupplierName noCPE"
-		       type="text"
-		       placeholder="Microsoft" name="SupplierName"/>
-	      </td>
+			  <div class="mline">
+			<select name="SupplierType" class="form-control mauto SupplierType not_required">
+			  <option>Organization</option>
+			  <option>Person</option>
+			  <option>Tool</option>			  
+			</select>
+			<input class="form-control mlast SupplierName noCPE" type="text"
+			       placeholder="ACME" name="SupplierName">
+			<div class="SupplierNameCPE CPE d-none"></div>
+			</div>
 	    </tr>	
+		<tr>
+		  <td>External Reference</td>
+		  <td>
+		  <div class="mline">
+		<select name="ExternalRefType" class="form-control mauto ExternalRefType not_required">
+		  <option>cpe22</option>
+		  <option>cpe23</option>
+		  <option>purl</option>
+		  <option>maven</option>
+		  <option>npm</option>
+		  <option>nuget</option>
+		  <option>bower</option>
+		  <option>other</option>
+		</select>
+		<input class="form-control mlast not_required" type="text"
+			   name="ExternalRef" data-required="0"
+			   value=""  placeholder="cpe:&sol;a:acme:infusion:1.0">
+		  </div></td>
+		</tr>
 	    <tr class="spdx-lite d-none">
 	      <td>Package File Name</td>
 	      <td>
@@ -789,10 +829,9 @@ $CreatorComment
 	## 2.4 Primary Component (described by the SBOM)
 	PackageName: $PackageName
 	SPDXID: $SPDXID
-	PackageComment: PURL is pkg:supplier/$UrlSupplierName/$UrlPackageName@$PackageVersion $AddPackageComment
-	ExternalRef: PACKAGE-MANAGER purl pkg:supplier/$UrlSupplierName/$UrlPackageName@$PackageVersion
 	PackageVersion: $PackageVersion
-	PackageSupplier: $SupplierType: $SupplierName
+	PackageSupplier: $SupplierType: $SupplierName 
+	$ExternalRef
 	Relationship: $Document-SPDXID DESCRIBES $SPDXID
 	PackageDownloadLocation: $PackageDownloadLocation
 	FilesAnalyzed: $FilesAnalyzed
@@ -805,10 +844,9 @@ $CreatorComment
 	##
 	PackageName: $PackageName
 	SPDXID: $SPDXID
-	PackageComment:  PURL is pkg:supplier/$UrlSupplierName/$UrlPackageName@$PackageVersion $AddPackageComment
-	ExternalRef: PACKAGE-MANAGER purl pkg:supplier/$UrlSupplierName/$UrlPackageName@$PackageVersion	
 	PackageVersion: $PackageVersion
-	PackageSupplier: $SupplierType: $SupplierName
+	PackageSupplier: $SupplierType: $SupplierName 
+	$ExternalRef
 	Relationship: $ParentID CONTAINS $SPDXID
 	PackageDownloadLocation: $PackageDownloadLocation
 	FilesAnalyzed: $FilesAnalyzed

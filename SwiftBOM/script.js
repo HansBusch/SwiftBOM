@@ -25,13 +25,7 @@ var $packages = {
     "comment": "PURL is pkg:supplier/$UrlSupplierName/$UrlPackageName@$PackageVersion $AddPackageComment",
     "copyrightText": "$PackageCopyrightText",
     "downloadLocation": "$PackageDownloadLocation",
-    "externalRefs": [
-	{
-	    "referenceCategory": "PACKAGE_MANAGER",
-	    "referenceLocator": "pkg:supplier/$UrlSupplierName/$UrlPackageName@$PackageVersion",
-	    "referenceType": "purl"
-	}
-    ],
+    "externalRefs": [],
 //    "filesAnalyzed": "$FilesAnalyzed",
     "hasFiles": [
 	"SPDXRef-File-$BomRef"
@@ -803,6 +797,14 @@ function parse_spdx(spdxin, mcurrent_rowid, primaryOnly, fPid) {
 		key += '-'+line.shift().trim()
 		val = line.join(":").replace(/^\s+/, '')
 	}
+	else if (key == "ExternalRef") {
+		var items = val.split(' ')
+		if (items.length < 3) continue
+		items.shift()
+		if (!('ExternalRefType' in khash)) khash['ExternalRefType'] = []
+		khash['ExternalRefType'][components] = items.shift().replace('Type','')
+		val = items.join(' ');
+	}
 	if (key == "PackageName") components++
     if (!(key in khash)) khash[key] = []
 	khash[key][components < 0 ? 0 : components] = val
@@ -1129,6 +1131,25 @@ function spdx_lite_content(el,hkey) {
     })
     return spdx_lite_add
 }
+function spdx_externalRef(hkey)
+{
+	var json = []
+	var jref = {}
+	if (!('ExternalRef' in hkey) || hkey['ExternalRef'].length == 0) return json
+	var type = hkey['ExternalRefType']
+	if (type.startsWith('cpe')) {
+		hkey['ExternalRef'] = 'ExternalRef: SECURITY '+type+'Type '+hkey['ExternalRef']
+		jref.referenceCategory = 'SECURITY'
+		jref.referenceType = type+'Type'
+	}
+	else {
+		hkey['ExternalRef'] = 'ExternalRef: PACKAGE '+type+' '+hkey['ExternalRef']
+		jref.referenceCategory = 'PACKAGE'
+		jref.referenceType = type
+	}
+	jref.referenceLocator = hkey['ExternalRef']
+	return jref
+}
 function populate_dependencies(mybomref,componentId) {
     var xmlp = '<dependency ref="$MyBomRef">\n'.replace("$MyBomRef",mybomref)
     var xmlu = ''
@@ -1208,6 +1229,7 @@ function generate_spdx() {
 	hkey['Creator-Tool'] = hkey['Creator']['Tool'];
     hkey['UrlSupplierName'] = encodeURIComponent(hkey['SupplierName'])
     hkey['UrlPackageName'] = encodeURIComponent(hkey['PackageName'])
+	var jrefs = spdx_externalRef(hkey)
     var PrimaryPackageName = hkey['PackageName']
     var PrimaryID = hkey['SPDXID']
 	var PrimaryBomRef = PrimaryID.replace(/SPDXRef-/, '') 
@@ -1234,6 +1256,7 @@ function generate_spdx() {
     var spdxpkg = JSON.parse(JSON
 			     .stringify($packages)
 			     .replace(/\$([A-Za-z0-9]+)/gi, (_,x) => hkey[x]))
+	spdxpkg.externalRefs = jrefs;
     if(("filesAnalyzed" in spdxpkg) && (spdxpkg.filesAnalyzed == "true")) {
 	spdxpkg.filesAnalyzed = true
 	var spdxfile = JSON.parse(JSON
@@ -1284,6 +1307,8 @@ function generate_spdx() {
 		var parent = PrimaryPackageName
 		hkey['DependBomRef'] = PrimaryBomRef
 		hkey['BomRef'] = hkey['SPDXID'].replace(/SPDXRef-/, '') 
+		var jrefs = spdx_externalRef(hkey)
+
 		var xdepJ = []
 		if($(cmps[i]).find(".ParentComponent").val() != "PrimaryComponent") {
 			/* This is a child relationship of level 2 or more */
@@ -1331,6 +1356,7 @@ function generate_spdx() {
 		spdxpkg = JSON.parse(JSON
 					 .stringify($packages)
 					 .replace(/\"\$([A-Za-z0-9]+)\"/gi, (_,x) => safeJSON(hkey[x])))
+		spdxpkg.externalRefs = jrefs;
 		if(("filesAnalyzed" in spdxpkg) && (spdxpkg.filesAnalyzed == "true")) {
 			spdxpkg.filesAnalyzed = true
 			/* In spdxJson packagefilename and filename can be the same*/

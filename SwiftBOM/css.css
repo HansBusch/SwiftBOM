@@ -155,9 +155,16 @@ a.circletext.spdx-lite {
     padding-bottom: 6px;
     padding-left: 2px;
 }
+.mline {
+	display: inline-flex;
+	gap: 10px;
+	width:100%;
+}
 .mauto {
     width: auto;
-    display:inline;
+}
+.mlast {
+    flex: 1;
 }
 .blackbody {
     background-color: #222;
