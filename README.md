@@ -4,8 +4,15 @@ A "Software Bill of Materials" (SBOM) is effectively a nested inventory, a list 
 
 SwiftBOM a SBOM generator tool [here](./SwiftBOM/) is part of CERT's work in supporting SBOM generation efforts for Proof-of-Concepts and Demo purposes.  This tool is currently being explored by  [Healthcare Proof of Concept](https://www.ntia.gov/files/ntia/publications/ntia_sbom_healthcare_poc_report_2019_1001.pdf) teams for their PoC efforts. 
 
-The [SwiftBOM](https://sbom.democert.org/sbom/) has some live demo that you can run to see SBOM generation supported by the tool.  The tool also has some limited import capability to accept SBOM input and provide multiple format outputs.
+The [SwiftBOM](https://sbom.democert.org/sbom/) has some live demo that you can run to see SBOM generation supported by the tool.  
 
+## Input and Output
+This variant of the tool supports reading Tagged SPDX format with the following restrictions:
+* Support for single external reference. Output to CyclonDX restricted to cpe and purl
+* Output is restricted tags shown via the UI including SPDX-Lite values. Any additional tags are discarded
+* In case input doesn't include SPDXID entries these will be filled with GUID values
+* Relationship support restricted to 'CONTAINS' and 'DEPENDS_ON'.
+* The UI can only show a single parent per component. If multiple exist only one will be shown.
 
 # SBOM Formats  
 
