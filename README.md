@@ -8,8 +8,8 @@ The [SwiftBOM](https://sbom.democert.org/sbom/) has some live demo that you can 
 
 ## Input and Output
 This variant of the tool supports reading Tagged SPDX format with the following restrictions:
-* Support for single external reference. Output to CyclonDX restricted to cpe and purl
-* Output is restricted tags shown via the UI including SPDX-Lite values. Any additional tags are discarded
+* Support for single external reference per component. Output to CyclonDX restricted to cpe and purl
+* Output is restricted to tags available via the UI including SPDX-Lite values. Any additional tags are discarded on export
 * In case input doesn't include SPDXID entries these will be filled with GUID values
 * Relationship support restricted to 'CONTAINS' and 'DEPENDS_ON'.
 * The UI can only show a single parent per component. If multiple exist only one will be shown.
