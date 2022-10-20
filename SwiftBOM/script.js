@@ -22,7 +22,6 @@ var spdxJson = {
 }
 var $packages = {
     "SPDXID": "$SPDXID",
-    "comment": "PURL is pkg:supplier/$UrlSupplierName/$UrlPackageName@$PackageVersion $AddPackageComment",
     "copyrightText": "$PackageCopyrightText",
     "downloadLocation": "$PackageDownloadLocation",
     "externalRefs": [],
@@ -88,7 +87,6 @@ var $metadata = {
 	"type": "application",
 	"bom-ref": "$SPDXID",
 	"name": "$PackageName",
-	"purl": "pkg:supplier/$UrlSupplierName/$UrlPackageName@$PackageVersion",
 	"supplier": {
 	    "name": "$SupplierName"
 	},
@@ -102,7 +100,6 @@ var $component = {
     "type": "library",
     "bom-ref": "$BomRef",
     "name": "$PackageName",
-    "purl": "pkg:supplier/$UrlSupplierName/$UrlPackageName@$PackageVersion",
     "publisher": "$SupplierName",
     "version": "$PackageVersion"
 }
@@ -1095,22 +1092,22 @@ function spdx_lite_content(el,hkey) {
 }
 function spdx_externalRef(hkey)
 {
-	var json = []
 	var jref = {}
-	if (!('ExternalRef' in hkey) || hkey['ExternalRef'].length == 0) return json
+	var exref = hkey['ExternalRef']
+	if (!('ExternalRef' in hkey) || exref.length == 0) return []
 	var type = hkey['ExternalRefType']
 	if (type.startsWith('cpe')) {
-		hkey['ExternalRef'] = 'ExternalRef: SECURITY '+type+'Type '+hkey['ExternalRef']
+		hkey['ExternalRef'] = 'ExternalRef: SECURITY '+type+'Type '+exref
 		jref.referenceCategory = 'SECURITY'
 		jref.referenceType = type+'Type'
 	}
 	else {
-		hkey['ExternalRef'] = 'ExternalRef: PACKAGE '+type+' '+hkey['ExternalRef']
+		hkey['ExternalRef'] = 'ExternalRef: PACKAGE '+type+' '+exref
 		jref.referenceCategory = 'PACKAGE'
 		jref.referenceType = type
 	}
-	jref.referenceLocator = hkey['ExternalRef']
-	return jref
+	jref.referenceLocator = exref
+	return [jref]
 }
 function populate_dependencies(mybomref,componentId) {
     var xmlp = '<dependency ref="$MyBomRef">\n'.replace("$MyBomRef",mybomref)
@@ -1303,17 +1300,19 @@ function generate_spdx() {
 					.stringify($component)
 					.replace(/\"\$([A-Za-z0-9]+)\"/gi,
 						 (_,x) => safeJSON(hkey[x])))
+		if (jrefs.length) {
+			if (jrefs[0].referenceCategory = 'SECURITY') xcmpsJ.cpe = jrefs[0].referenceLocator
+			else if (jrefs[0].referenceType = 'purl') xcmpsJ.purl = jrefs[0].referenceLocator
+		}
 		cyclonedxpcmps += $('#cyclonedx .cyclonedxcmp').val().
 			replace(/\$([A-Za-z0-9]+)/gi, (_,x) => hkey[x])
-		/* custom_fields in cyclonedx from wtable table  */
-		if($(cmps[i]).data('custom_cyclonedx')) {
-			var add_data = $(cmps[i]).data('custom_cyclonedx')
-			xcmpsJ = Object.assign({},xcmpsJ,add_data)
-			if('cpe' in add_data) {
-			cyclonedxpcmps = cyclonedxpcmps
-				.replace(/<\/component>\s+$/,
-					 "<cpe>"+add_data.cpe+"</cpe>\n</component>\n")
-			}
+		if (jrefs.length) {
+			if (jrefs[0].referenceCategory = 'SECURITY') 
+				cyclonedxpcmps = cyclonedxpcmps.replace(/<\/component>\s+$/,
+					 "<cpe>"+jrefs[0].referenceLocator+"</cpe>\n</component>\n")
+			else if (jrefs[0].referenceType = 'purl')
+				cyclonedxpcmps = cyclonedxpcmps.replace(/<\/component>\s+$/,
+					 "<purl>"+jrefs[0].referenceLocator+"</purl>\n</component>\n")
 		}
 		spdxpkg = JSON.parse(JSON
 					 .stringify($packages)
