@@ -1214,8 +1214,6 @@ function generate_spdx() {
     cyclonedx += cyclonedxcmp 
     spdx += tpcmp.replace(/\$([-A-Za-z0-9]+)/gi, (_,x) => safeSPDX(x, hkey[x]))
     spdx += spdx_lite_content($('.pcmp_table .spdx-lite-field'),hkey)
-	var test = JSON.stringify($packages)
-			     .replace(/\"\$([A-Za-z0-9]+)\"/gi, (_,x) => safeJSON(hkey[x]))
     var spdxpkg = JSON.parse(JSON
 			     .stringify($packages)
 			     .replace(/\"\$([A-Za-z0-9]+)\"/gi, (_,x) => safeJSON(hkey[x])))
@@ -1246,7 +1244,7 @@ function generate_spdx() {
 		  RelParent:hkey['Document-SPDXID']}
     var spdxrel = JSON.parse(JSON
 			     .stringify($relationships)
-			     .replace(/\$([A-Za-z0-9]+)/gi, (_,x) => safeJSON(relkey[x])))
+			     .replace(/\"\$([A-Za-z0-9]+)\"/gi, (_,x) => safeJSON(relkey[x])))
     //console.log(spdx)
     /* Add option spdx_lite_fields */
     spdxJson['relationships'].push(spdxrel)
