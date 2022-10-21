@@ -899,7 +899,7 @@ function fill_component(xcmps,xIndex) {
 	    khash['SupplierType'][xIndex] = ""
 	    khash['SupplierName'][xIndex] = "NOASSERTION"
 	}
-	if ('PackageChecksum' in khash && !(typeof khash['PackageChecksum'][xIndex] == undefined)) {
+	if ('PackageChecksum' in khash && !(typeof khash['PackageChecksum'][xIndex] == 'undefined')) {
 	    var data =  khash['PackageChecksum'][xIndex].split(":")
 	    if(data.length == 2) {
 			pack.ChecksumType = 'Package'
@@ -1050,7 +1050,7 @@ function safeJSON(inText) {
 		})
 		return '{'+txt+'}'
 	}
-    inText = inText.trim().replace(/["]/g, '\"')
+    inText = inText.trim().replace(/"/g, '\'')
     if(inText.toUpperCase() in DefaultEmpty) return '"'+inText.toUpperCase()+'"'
 	return '"'+inText.replace(/[\n]/g, '\\n')+'"'
 }
@@ -1196,8 +1196,6 @@ function generate_spdx() {
     var PrimaryID = hkey['SPDXID']
 	if (PrimaryID == '') PrimaryID = hkey['SPDXID'] = 'SPDXRef-'+generate_uuid()
 	var PrimaryBomRef = PrimaryID.replace(/SPDXRef-/, '') 
-    var test  = JSON.stringify(spdxJson)
-			  .replace(/\"\$([A-Za-z0-9]+)\"/gi, (_,x) => safeJSON(hkey[x]))
     spdxJson = JSON.parse(JSON.stringify(spdxJson)
 			  .replace(/\"\$([-A-Za-z0-9]+)\"/gi, (_,x) => safeJSON(hkey[x])))
     var swidpcmp = $('#swid .pcmp').val()
@@ -1216,15 +1214,17 @@ function generate_spdx() {
     cyclonedx += cyclonedxcmp 
     spdx += tpcmp.replace(/\$([-A-Za-z0-9]+)/gi, (_,x) => safeSPDX(x, hkey[x]))
     spdx += spdx_lite_content($('.pcmp_table .spdx-lite-field'),hkey)
+	var test = JSON.stringify($packages)
+			     .replace(/\"\$([A-Za-z0-9]+)\"/gi, (_,x) => safeJSON(hkey[x]))
     var spdxpkg = JSON.parse(JSON
 			     .stringify($packages)
-			     .replace(/\$([A-Za-z0-9]+)/gi, (_,x) => hkey[x]))
+			     .replace(/\"\$([A-Za-z0-9]+)\"/gi, (_,x) => safeJSON(hkey[x])))
 	spdxpkg.externalRefs = jrefs;
     if(("filesAnalyzed" in spdxpkg) && (spdxpkg.filesAnalyzed == "true")) {
 	spdxpkg.filesAnalyzed = true
 	var spdxfile = JSON.parse(JSON
 				  .stringify($files)
-				  .replace(/\$([A-Za-z0-9]+)/gi, (_,x) => hkey[x]))
+				  .replace(/\"\$([A-Za-z0-9]+)\"/gi, (_,x) => safeJSON(hkey[x])))
 	spdxJson['files'].push(spdxfile)
 	/*  Cyclonedx hash for primary component is disabled bcos the primary component is 
 	    treated as a "device" */
@@ -1233,7 +1233,7 @@ function generate_spdx() {
 	cyclonedx = cyclonedx.replace(/<\/component>/,cyclonedxhashxml+"\n</component>\n")
 	var cyclonedxhashjson = JSON.parse(JSON
 					   .stringify(cyclonedxhashj)
-					   .replace(/\$([A-Za-z0-9]+)/gi, (_,x) => hkey[x]))
+					   .replace(/\"\$([A-Za-z0-9]+)\"/gi, (_,x) => safeJSON(hkey[x])))
 	cyclonedxJson["metadata"]["component"]  = Object.assign({},cyclonedxJson["metadata"]["component"],cyclonedxhashjson)
 	
     }
@@ -1246,7 +1246,7 @@ function generate_spdx() {
 		  RelParent:hkey['Document-SPDXID']}
     var spdxrel = JSON.parse(JSON
 			     .stringify($relationships)
-			     .replace(/\$([A-Za-z0-9]+)/gi, (_,x) => relkey[x]))
+			     .replace(/\$([A-Za-z0-9]+)/gi, (_,x) => safeJSON(relkey[x])))
     //console.log(spdx)
     /* Add option spdx_lite_fields */
     spdxJson['relationships'].push(spdxrel)
