@@ -40,7 +40,7 @@ var $files = {
     "checksums": [
 	{
 	    "algorithm": "$ChecksumAlgorithm",
-	    "checksumValue": "$Checksumv"
+	    "checksumValue": "$PackageChecksum"
 	}
     ],
     "fileName": "$PackageFileName"
@@ -111,10 +111,10 @@ var $dependency = {
 }
 var cyclonedxdeps = ''
 /* Option Cylconedx element, add hashes if available */
-var cyclonedxhash = "<hashes>\n<hash alg=\"$ChecksumAlgorithm\">$Checksumv</hash>\n</hashes>"
+var cyclonedxhash = "<hashes>\n<hash alg=\"$ChecksumAlgorithm\">$PackageChecksum</hash>\n</hashes>"
 var cyclonedxhashj = {"hashes": [{
     "alg": "$ChecksumAlgorithm",
-    "content": "$Checksumv"
+    "content": "$PackageChecksum"
 }]}
 /* CSAF advisory for this SPDX document 
    CSAF look like 
@@ -251,27 +251,14 @@ function checksumtype(w) {
     var wtable = $(w).closest('table')
     if(w.selectedIndex > 0) {
 	/* Fake a required field*/
-	$(w).addClass('fake-required')
-	/* Decide whether this is file or packagechecksum */
-	//wtable.find('.FileChecksum').attr({name: $(w).val()+"Checksum"})
-	wtable.find('.Checksumv').removeClass('not_required d-none')
-	wtable.find('.ChecksumAlgorithm').removeClass('not_required d-none')
-	if(w.selectedIndex == 1) { /* File Checksum */
-	    wtable.find('.FileChecksum').removeClass('not_required')
-	    wtable.find('.FileName').removeClass('not_required d-none')
-	    wtable.find('.PackageChecksum').addClass('not_required')
-	    wtable.find('.PackageChecksum').val('')
-	    wtable.find('.PackageFileName').addClass('not_required d-none')
-	} else if(w.selectedIndex == 2) { /* Package Checksum */
-	    wtable.find('.FileChecksum').val()	    
-	    wtable.find('.FileChecksum').addClass('not_required')
-	    wtable.find('.FileName').addClass('not_required d-none')
+		$(w).addClass('fake-required')
+		wtable.find('.PackageChecksum').removeClass('not_required d-none')
+		wtable.find('.ChecksumAlgorithm').removeClass('not_required d-none')
 	    wtable.find('.PackageChecksum').removeClass('not_required')
 	    wtable.find('.PackageFileName').removeClass('not_required d-none')	    
-	}
     } else {
-	$(w).removeClass('fake-required')
-	wtable.find('.ChecksumRelated').addClass('not_required d-none')
+		$(w).removeClass('fake-required')
+		wtable.find('.ChecksumRelated').addClass('not_required d-none')
     }
 }
 function checksumvalid(w) {
@@ -279,7 +266,7 @@ function checksumvalid(w) {
 	var wtable = $(w).closest('table')
 	wtable.find('.invalid-feedback').remove()
 	var alg = wtable.find(".ChecksumAlgorithm").val()
-	var val = wtable.find(".Checksumv").val()
+	var val = wtable.find(".PackageChecksum").val()
 	/* Find if it is a file or a package that was analyzed and given signature*/
 	var fileorpackage = wtable.find(".ChecksumType").val()
 	wtable.find("."+fileorpackage+"Checksum").val(alg+": "+val)
@@ -297,12 +284,10 @@ function algvalue(w) {
 		  SHA256: "2cf24dba5fb0a30e26e83b2ac5b9e29e1b161e5c1fa7425e73043362938b9824",
 		  SHA384: "38b060a751ac96384cd9327eb1b1e36a21fdb71114be07434c0cc7bf63f6e1da274edebfe76f65fbd51ad2f14898b95b",
 		  SHA512: "cf83e1357eefb8bdf1542850d66d8007d620e4050b5715dc83f4a921d36ce9ce47d0d13c5d85f2b0ff8318d2877eec2f63b931bd47417a81a538327af927da3e",
-		  MD2: "1bee69a46ba811185c194762abaeae90",
-		  MD4: "1bee69a46ba811185c194762abaeae90",
-		  MD5: "1bee69a46ba811185c194762abaeae90",
-		  MD6: "1bee69a46ba811185c194762abaeae90"}		  
+		  MD5: "1bee69a46ba811185c194762abaeae90"
+	}
     if(alg in algmap) {
-	var algval = wtable.find(".Checksumv")
+	var algval = wtable.find(".PackageChecksum")
 	var sample = algmap[alg]
 	var pattern = "[0-9a-f]{"+String(sample.length)+"}"
 	algval.attr({placeholder: sample, size: sample.length,
@@ -640,7 +625,7 @@ function do_example() {
     /* Do checksum prefil */
     $('.ChecksumType').val("Package")
     $('.ChecksumAlgorithm').val("SHA256")
-    $('.Checksumv').each(function() {
+    $('.PackageChecksum').each(function() {
 	this.value = sha256(Math.random())
     })
     $('.PackageFileName').each(function() {
@@ -648,27 +633,27 @@ function do_example() {
 	    this.value = $(this).attr('sample')
     })
     var sample_array=[{PackageName:"Windows Embedded Standard 7 with SP1 patches",
-		       PackageFileName: "MS-Windows-7-tr.iso", Checksumv: sha256(Math.random()),
+		       PackageFileName: "MS-Windows-7-tr.iso", PackageChecksum: sha256(Math.random()),
 		       ChecksumType: "Package",ChecksumAlgorithm: "SHA256",
 		       PackageVersion:"3.0", SupplierName:"Microsoft", SPDXID:"8795cf43-7004-8540-132f-c6a52339c419"},
 		      {PackageName:"SQL 2005 Express", PackageVersion:"9.00.5000.00,SP4",
 		       ChecksumType: "File",ChecksumAlgorithm: "SHA256",		       
-		       FileName: "SQL-2005-Express.msi",Checksumv:sha256(Math.random()),
+		       FileName: "SQL-2005-Express.msi",PackageChecksum:sha256(Math.random()),
 		       SupplierName:"Microsoft"},
 		      {ParentComponent:"Component1",PackageName:".Net Frame Work",
 		       ChecksumType: "Package",ChecksumAlgorithm: "SHA256",		       
-		       PackageFileName: "Windows-NET-Framework.exe",Checksumv:sha256(Math.random()),
+		       PackageFileName: "Windows-NET-Framework.exe",PackageChecksum:sha256(Math.random()),
 		       PackageVersion:"V2.1.21022.8,SP2",SupplierName:"Microsoft"},
 		      {PackageName:"Java 8",PackageVersion:"v1.8",SupplierName:"Oracle",
 		       ChecksumType: "Package",ChecksumAlgorithm: "SHA256",		       
-		       PackageFileName: "java-8.3.1-re.exe",Checksumv:sha256(Math.random())},
+		       PackageFileName: "java-8.3.1-re.exe",PackageChecksum:sha256(Math.random())},
 		      {ParentComponent:"Component5",PackageName:"Tomcat 9",
 		       ChecksumType: "Package",ChecksumAlgorithm: "SHA256",		       
-		       PackageFileName: "apache-tomcat-8.5.69.zip",Checksumv: sha256(Math.random()),
+		       PackageFileName: "apache-tomcat-8.5.69.zip",PackageChecksum: sha256(Math.random()),
 		       PackageVersion:"v9.037",SupplierName:"Apache Foundation"},
 		      {ParentComponent:"Component5",PackageName:"Spring Framework",
 		       ChecksumType: "File",ChecksumAlgorithm: "SHA256",		       
-		       FileName: "spring-instrument.jar",Checksumv:sha256(Math.random()),   
+		       FileName: "spring-instrument.jar",PackageChecksum:sha256(Math.random()),   
 		       PackageVersion:"v4.7",SupplierName:"Apache Foundation"}]
     for(var i=0; i<sample_array.length; i++) {
 	add_cmp()
@@ -680,7 +665,7 @@ function do_example() {
     }
     $('.ChecksumType').trigger("change")
     $('.ChecksumAlgorithm').trigger("change")
-    $('.Checksumv').trigger("change")
+    $('.PackageChecksum').trigger("change")
     $('.FilesAnalyzed').val('true')
     var dcmps = $('#main_table [name="PackageName"]')
     for(var i=0; i<dcmps.length; i++) {
@@ -902,9 +887,7 @@ function update_relationships(base) {
   $('[name="PackageName"]').trigger('change')
 }
 function fill_component(xcmps,xIndex) {
-    for(var i=0; i< xcmps.length; i++) {
-	var field = xcmps[i]
-	/* PackageSupplier: $SupplierType: $SupplierName  */
+	var pack = {}
 	if('PackageSupplier' in khash) {
 	    var supplierdata =  khash['PackageSupplier'][xIndex].split(":")
 	    if(supplierdata.length > 1) {
@@ -916,10 +899,28 @@ function fill_component(xcmps,xIndex) {
 	    khash['SupplierType'][xIndex] = ""
 	    khash['SupplierName'][xIndex] = "NOASSERTION"
 	}
-	if(field.name in khash)
-	    field.value = khash[field.name][xIndex] || ""
-	else 
-	    console.log("Skipping field "+field.name+", with value "+field.value)
+	if ('PackageChecksum' in khash && !(typeof khash['PackageChecksum'][xIndex] == undefined)) {
+	    var data =  khash['PackageChecksum'][xIndex].split(":")
+	    if(data.length == 2) {
+			pack.ChecksumType = 'Package'
+			pack.ChecksumAlgorithm = data[0]
+			pack.PackageChecksum = data[1].trim()
+		}
+	}
+    for(var i=0; i< xcmps.length; i++) {
+		var field = xcmps[i]
+		/* PackageSupplier: $SupplierType: $SupplierName  */
+		if(field.name in pack) {
+			field.value = pack[field.name]
+			if (field.name == 'ChecksumAlgorithm') {
+				checksumtype(field);
+				algvalue(field);
+			}
+		}
+		else if(field.name in khash)
+			field.value = khash[field.name][xIndex] || ""
+		else 
+			console.log("Skipping field "+field.name+", with value "+field.value)
 
     }
 }
@@ -1084,7 +1085,9 @@ function spdx_lite_content(el,hkey) {
     el.each(function() {
 	/* Should have a value and should be unique to be added */
 	if((this.name in hkey) && (this.value != "") && (!(this.name in uniq))) {
-	    spdx_lite_add += this.name+": "+safeSPDX(this.name, this.value)+"\n"
+	    var val = safeSPDX(this.name, this.value)+"\n"
+		if (this.name == 'PackageChecksum') val = hkey['ChecksumAlgorithm']+': '+val
+	    spdx_lite_add += this.name+": "+val
 	    uniq[this.name] = 1
 	}
     })

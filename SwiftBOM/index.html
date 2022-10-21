@@ -351,18 +351,14 @@
 		    <tr class="ComponentChecksumRow">
 		      <td>Component Checksum</td>
 		      <td>
-			<div style="padding-bottom: 12px">
+			<div class="mline" style="padding-bottom: 12px">
 			  <select name="ChecksumType" placeholder="Package"
 				  onchange="checksumtype(this)"
 				  class="not_required mauto form-control scool ChecksumType">
 			    <option value="">Type</option>
 			    <option>File</option>
 			    <option>Package</option>
-			  </select> &nbsp;
-			  <input type="text" class="form-control mauto not_required FileName spdx-lite-field d-none ChecksumRelated" name="FileName" size="44" placeholder="Filename.extension">
-			  <input type="text" class="form-control mauto not_required PackageFileName spdx-lite-field d-none ChecksumRelated" name="PackageFileName" size="44" placeholder="Packagename.extension" sample="INFUSION.iso">
-			</div>
-			<div>
+			  </select> 
 			  <select name="ChecksumAlgorithm"
 				  onchange="algvalue(this)"
 				  class="form-control mauto not_required ChecksumAlgorithm d-none ChecksumRelated">
@@ -372,19 +368,14 @@
 			    <option>SHA256</option>
 			    <option>SHA384</option>
 			    <option>SHA512</option>
-			    <option>MD2</option>
-			    <option>MD4</option>
 			    <option>MD5</option>
-			    <option>MD6</option>
 			  </select>
+			</div>
+			  <input type="text" class="form-control mauto not_required PackageFileName spdx-lite-field d-none ChecksumRelated" name="PackageFileName" size="44" placeholder="Packagename.extension" sample="INFUSION.iso">
+			<div>
 			  &nbsp; 
-			  <input type="text" name="Checksumv" size="32"
-				 onchange="checksumvalid(this)"
-				 class="form-control not_required mauto Checksumv d-none ChecksumRelated"/>
-			  <input type="hidden" name="FileChecksum"
-				 class="not_required spdx-lite-field mauto FileChecksum ChecksumRelated"/>
-			  <input type="hidden" name="PackageChecksum"
-				 class="not_required spdx-lite-field mauto PackageChecksum ChecksumRelated"/>
+			  <input name="PackageChecksum" size="32"
+				 class="form-control not_required spdx-lite-field mauto PackageChecksum d-none ChecksumRelated"/>
 			   <input type="hidden" name="AddPackageComment"
 			   class="AddPackageComment not_required" value=" "/>
 				 
@@ -645,18 +636,14 @@
 		    <tr class="ComponentChecksumRow">
 		      <td>Component Checksum</td>
 		      <td>
-			<div style="padding-bottom: 12px">
-			  <select name="ChecksumType"
+			<div class="mline" style="padding-bottom: 12px">
+			  <select name="ChecksumType" placeholder="Package"
 				  onchange="checksumtype(this)"
 				  class="not_required mauto form-control scool ChecksumType">
 			    <option value="">Type</option>
 			    <option>File</option>
 			    <option>Package</option>
-			  </select> &nbsp;
-			  <input type="text" class="form-control mauto not_required FileName spdx-lite-field d-none ChecksumRelated" name="FileName" size="44" placeholder="File name">
-			  <input type="text" class="form-control mauto not_required PackageFileName spdx-lite-field d-none ChecksumRelated" name="PackageFileName" size="44" placeholder="Package name" sample="Windows7-Embedded.pkg">
-			</div>
-			<div>
+			  </select>
 			  <select name="ChecksumAlgorithm"
 				  onchange="algvalue(this)"
 				  class="form-control mauto not_required ChecksumAlgorithm d-none ChecksumRelated">
@@ -666,19 +653,14 @@
 			    <option>SHA256</option>
 			    <option>SHA384</option>
 			    <option>SHA512</option>
-			    <option>MD2</option>
-			    <option>MD4</option>
 			    <option>MD5</option>
-			    <option>MD6</option>
 			  </select>
-			  &nbsp; 
-			  <input type="text" name="Checksumv" size="32"
-				 onchange="checksumvalid(this)"
-				 class="form-control not_required mauto Checksumv d-none ChecksumRelated"/>
-			  <input type="hidden" name="FileChecksum"
-				 class="not_required spdx-lite-field mauto FileChecksum ChecksumRelated"/>
-			  <input type="hidden" name="PackageChecksum"
-				 class="not_required spdx-lite-field mauto PackageChecksum ChecksumRelated"/>
+			</div>
+			  <input type="text" class="form-control mauto not_required PackageFileName spdx-lite-field d-none ChecksumRelated" name="PackageFileName" size="44" placeholder="Package name" sample="Windows7-Embedded.pkg">
+				<div>
+				 &nbsp;
+			  <input type="text" name="PackageChecksum" size="32"
+				 class="form-control not_required spdx-lite-field mauto PackageChecksum d-none ChecksumRelated"/>
 			   <input type="hidden" name="AddPackageComment"
 			   class="AddPackageComment not_required" value=" "/>
 			</div>
