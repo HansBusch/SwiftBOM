@@ -257,13 +257,6 @@
 			   target="_blank" class="circletext float-right spdx-lite">
 			  &quest;
 			</a>
-			<span class="float-right"> &nbsp; </span>
-			<button class="btn btn-info float-right cspdx-lite"
-				data-toggle="tooltip" data-placement="top"
-				title="Add optional SPDX Lite fields"
-				onclick="vtoggle(this,'spdx-lite')">
-			  + SPDX Lite
-			</button>
 		      </th>
 		    </tr>
 		  </thead><tbody>
@@ -321,25 +314,15 @@
 			       value=""  placeholder="cpe:&sol;a:acme:infusion:1.0">
 		      </div></td>
 		    </tr>
-		    <tr class="spdx-lite d-none">
-		      <td>Package File Name</td>
-		      <td>
-			<input class="form-control not_required spdx-lite-field" type="text"
-			       name="PackageFileName" data-required="0"
-			       value=""  placeholder="Filename.extension">
-		      </td>
-		    </tr>
-		    <tr class="spdx-lite d-none">
-		      <td>Package Download Location</td>
-		      <td>
-			<input class="form-control prefill" type="text"
-			       name="PackageDownloadLocation" data-required="1"
-			       value="NOASSERTION" data-default="NOASSERTION"
-			       placeholder="https://github.com/MySoftware/Mypackage.exe">
-		      </td>
-		    </tr>
 		    <tr class="ComponentChecksumRow">
-		      <td>Component Checksum</td>
+		      <td>Component Checksum<br/>
+			<button class="btn btn-info float-bottom cspdx-lite" style="margin-top:20px;"
+				data-toggle="tooltip" data-placement="top"
+				title="Add optional SPDX Lite fields"
+				onclick="vtoggle(this,'spdx-lite')">
+			  + Details
+			</button>
+			  </td>
 		      <td>
 			<div class="mline" style="padding-bottom: 12px">
 			  <select name="ChecksumType" placeholder="Package"
@@ -372,7 +355,15 @@
 			</div>
 		      </td>
 		    </tr>
-		    
+		    <tr class="spdx-lite d-none">
+		      <td>Package Download Location</td>
+		      <td>
+			<input class="form-control prefill" type="text"
+			       name="PackageDownloadLocation" data-required="1"
+			       value="NOASSERTION" data-default="NOASSERTION"
+			       placeholder="https://github.com/MySoftware/Mypackage.exe">
+		      </td>
+		    </tr>
 		    <tr class="spdx-lite d-none">
 		      <td>Package Home Page</td>
 		      <td>
@@ -596,25 +587,15 @@
 			   value=""  placeholder="cpe:&sol;a:acme:infusion:1.0">
 		  </div></td>
 		</tr>
-	    <tr class="spdx-lite d-none">
-	      <td>Package File Name</td>
-	      <td>
-		<input class="form-control not_required spdx-lite-field" type="text"
-		       name="PackageFileName" data-required="0"
-		       value=""  placeholder="Filename.extension">			
-	      </td>
-	    </tr>
-	    <tr class="spdx-lite d-none">
-	      <td>Package Download Location</td>
-	      <td>
-		<input class="form-control prefill" type="text"
-		       name="PackageDownloadLocation" data-required="1"
-		       value="NOASSERTION" data-default="NOASSERTION"
-		       placeholder="https://github.com/MySoftware/Mypackage.exe">
-	      </td>
-	    </tr>
 		    <tr class="ComponentChecksumRow">
-		      <td>Component Checksum</td>
+		      <td>Component Checksum<br/>
+			<button class="btn btn-info float-bottom cspdx-lite" style="margin-top:20px;"
+				data-toggle="tooltip" data-placement="top"
+				title="Add optional SPDX Lite fields"
+				onclick="vtoggle(this,'spdx-lite')">
+			  + Details
+			</button>
+			</td>
 		      <td>
 			<div class="mline" style="padding-bottom: 12px">
 			  <select name="ChecksumType" placeholder="Package"
@@ -646,7 +627,15 @@
 			</div>
 		      </td>
 		    </tr>
-	    
+	    <tr class="spdx-lite d-none">
+	      <td>Package Download Location</td>
+	      <td>
+		<input class="form-control prefill" type="text"
+		       name="PackageDownloadLocation" data-required="1"
+		       value="NOASSERTION" data-default="NOASSERTION"
+		       placeholder="https://github.com/MySoftware/Mypackage.exe">
+	      </td>
+	    </tr>
 	    <tr class="spdx-lite d-none">
 	      <td>Package Home Page</td>
 	      <td>

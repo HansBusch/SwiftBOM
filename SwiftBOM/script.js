@@ -443,7 +443,7 @@ function vtoggle(w,fclass) {
     }
     var wh = $(w).html().replace(/([\+\-])/,replacer)
     $(w).html(wh)
-    $('.'+fclass).toggleClass('d-none')
+    $(w).closest('table').find('.'+fclass).toggleClass('d-none')
 }
 function viewChild(w) {
     var cId = $(w).closest('table').attr('id')
