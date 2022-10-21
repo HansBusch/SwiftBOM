@@ -1191,6 +1191,7 @@ function generate_spdx() {
 	var jrefs = spdx_externalRef(hkey)
     var PrimaryPackageName = hkey['PackageName']
     var PrimaryID = hkey['SPDXID']
+	if (PrimaryID == '') PrimaryID = hkey['SPDXID'] = 'SPDXRef-'+generate_uuid()
 	var PrimaryBomRef = PrimaryID.replace(/SPDXRef-/, '') 
     var test  = JSON.stringify(spdxJson)
 			  .replace(/\"\$([A-Za-z0-9]+)\"/gi, (_,x) => safeJSON(hkey[x]))

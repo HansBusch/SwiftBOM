@@ -270,7 +270,7 @@
 
 		    <tr>
 		      <td>Component Name
-			<input type="hidden" name="SPDXID"
+			<input type="hidden" name="SPDXID" class="not_required"/>
 		      </td>
 		      <td>
 			<input class="form-control PackageName noCPE" type="text"
@@ -801,34 +801,34 @@ Created: $Created
 $CreatorComment
       </div>
       <div class="pcomponent">
-	## Packages
-	## 2.4 Primary Component (described by the SBOM)
-	PackageName: $PackageName
-	SPDXID: $SPDXID
-	PackageVersion: $PackageVersion
-	PackageSupplier: $SupplierType: $SupplierName 
-	$ExternalRef
-	Relationship: $Document-SPDXID DESCRIBES $SPDXID
-	PackageDownloadLocation: $PackageDownloadLocation
-	FilesAnalyzed: $FilesAnalyzed
-	PackageLicenseConcluded: $PackageLicenseConcluded
-	PackageLicenseDeclared: $PackageLicenseDeclared
-	PackageCopyrightText: $PackageCopyrightText
+## Packages
+## 2.4 Primary Component (described by the SBOM)
+PackageName: $PackageName
+SPDXID: $SPDXID
+PackageVersion: $PackageVersion
+PackageSupplier: $SupplierType: $SupplierName 
+$ExternalRef
+Relationship: $Document-SPDXID DESCRIBES $SPDXID
+PackageDownloadLocation: $PackageDownloadLocation
+FilesAnalyzed: $FilesAnalyzed
+PackageLicenseConcluded: $PackageLicenseConcluded
+PackageLicenseDeclared: $PackageLicenseDeclared
+PackageCopyrightText: $PackageCopyrightText
       </div>
       <div class="subcomponent">
-	## 2.4 All-Levels Components
-	##
-	PackageName: $PackageName
-	SPDXID: $SPDXID
-	PackageVersion: $PackageVersion
-	PackageSupplier: $SupplierType: $SupplierName 
-	$ExternalRef
-	Relationship: $ParentID CONTAINS $SPDXID
-	PackageDownloadLocation: $PackageDownloadLocation
-	FilesAnalyzed: $FilesAnalyzed
-	PackageLicenseConcluded: $PackageLicenseConcluded
-	PackageLicenseDeclared: $PackageLicenseDeclared
-	PackageCopyrightText: $PackageCopyrightText
+## 2.4 All-Levels Components
+##
+PackageName: $PackageName
+SPDXID: $SPDXID
+PackageVersion: $PackageVersion
+PackageSupplier: $SupplierType: $SupplierName 
+$ExternalRef
+Relationship: $ParentID CONTAINS $SPDXID
+PackageDownloadLocation: $PackageDownloadLocation
+FilesAnalyzed: $FilesAnalyzed
+PackageLicenseConcluded: $PackageLicenseConcluded
+PackageLicenseDeclared: $PackageLicenseDeclared
+PackageCopyrightText: $PackageCopyrightText
       </div>
       <div class="externalreference">ExternalDocumentRef: DocmentRef-$ExtDocumentName $ExtDocumentNamespace $ExtOptionalSHA256Signature
 	Relationship: SPDXRef-$ExtEscPackageName CONTAINS DocumentRef-$ExtDocumentName:SPDXRef-$ExtEscPackageName
