@@ -25,10 +25,6 @@ var $packages = {
     "copyrightText": "$PackageCopyrightText",
     "downloadLocation": "$PackageDownloadLocation",
     "externalRefs": [],
-//    "filesAnalyzed": "$FilesAnalyzed",
-    "hasFiles": [
-	"SPDXRef-File-$BomRef"
-    ],
     "licenseConcluded": "$PackageLicenseConcluded",
     "licenseDeclared": "$PackageLicenseDeclared",
     "name": "$PackageName",
@@ -239,14 +235,6 @@ $(function () {
 	}
     }
 })
-function checksummer(w) {
-    var wtable = $(w).closest('table');
-    wtable.find('.invalid-feedback').remove();
-    if(w.selectedIndex > 0)
-	wtable.find('.ChecksumType').val('File').trigger('change');
-    else
-	wtable.find('.ChecksumType').val('').trigger('change');
-}
 function checksumtype(w) {
     var wtable = $(w).closest('table')
     if(w.selectedIndex > 0) {
@@ -1218,8 +1206,7 @@ function generate_spdx() {
 			     .stringify($packages)
 			     .replace(/\"\$([A-Za-z0-9]+)\"/gi, (_,x) => safeJSON(hkey[x])))
 	spdxpkg.externalRefs = jrefs;
-    if(("filesAnalyzed" in spdxpkg) && (spdxpkg.filesAnalyzed == "true")) {
-	spdxpkg.filesAnalyzed = true
+	if (!(typeof hkey.PackageChecksum == 'undefined')) {
 	var spdxfile = JSON.parse(JSON
 				  .stringify($files)
 				  .replace(/\"\$([A-Za-z0-9]+)\"/gi, (_,x) => safeJSON(hkey[x])))
@@ -1234,9 +1221,6 @@ function generate_spdx() {
 					   .replace(/\"\$([A-Za-z0-9]+)\"/gi, (_,x) => safeJSON(hkey[x])))
 	cyclonedxJson["metadata"]["component"]  = Object.assign({},cyclonedxJson["metadata"]["component"],cyclonedxhashjson)
 	
-    }
-    else {
-	spdxpkg.filesAnalyzed = false
     }
     spdxJson['packages'].push(spdxpkg)
     var relkey = {RelType:"DESCRIBES",
@@ -1320,8 +1304,7 @@ function generate_spdx() {
 					 .stringify($packages)
 					 .replace(/\"\$([A-Za-z0-9]+)\"/gi, (_,x) => safeJSON(hkey[x])))
 		spdxpkg.externalRefs = jrefs;
-		if(("filesAnalyzed" in spdxpkg) && (spdxpkg.filesAnalyzed == "true")) {
-			spdxpkg.filesAnalyzed = true
+		if (!(typeof hkey.PackageChecksum == 'undefined')) {
 			/* In spdxJson packagefilename and filename can be the same*/
 			if('FileName' in hkey) {
 			hkey['PackageFileName'] = hkey['FileName']
@@ -1341,9 +1324,6 @@ function generate_spdx() {
 							   .replace(/\"\$([A-Za-z0-9]+)\"/gi,
 								(_,x) => safeJSON(hkey[x])))
 			xcmpsJ = Object.assign({},xcmpsJ,cyclonedxhashjson)
-		}
-		else {
-			spdxpkg.filesAnalyzed = false
 		}
 		spdxJson['packages'].push(spdxpkg)
 		cyclonedxJson['components'].push(xcmpsJ)	
