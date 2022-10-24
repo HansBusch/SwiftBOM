@@ -679,16 +679,13 @@ function do_example() {
 var khash = {} 
 var components = {}	// component by SPDXRef
 var relationships = []
+var primary
 function parse_spdx(spdxin, mcurrent_rowid, primaryOnly, fPid) {
   if (spdxin == "")
     spdxin = $('#spdxtag').text();
   /* This is filled if there is a childbom being inserted  with class mclass*/
-  var mclass = ""
-  if (mcurrent_rowid) {
-      mclass = "childbom"
-  }
   var component = {}
-  var primary = component
+  if (typeof primary == 'undefined') primary = component
   var lines = spdxin.split("\n")
   var compIndex = Object.keys(components).length - 1
   var inHeader = 1
@@ -724,6 +721,7 @@ function parse_spdx(spdxin, mcurrent_rowid, primaryOnly, fPid) {
 		inHeader = 0
 		compIndex++
 		component._index = compIndex
+		component._references = 0
 	}
 	else if (key == "SPDXID") {
 		if (!inHeader) {
@@ -755,6 +753,27 @@ function parse_spdx(spdxin, mcurrent_rowid, primaryOnly, fPid) {
   }
   if (inText) 
     add_invalid_feedback(headkeys[0], "Missing text termination")
+
+  if (mcurrent_rowid) {
+	Object.values(components).forEach(function (component) {
+		if (component._index == mcurrent_rowid) component._parent = primary
+	})
+  }
+	  component
+  update_ui(mcurrent_rowid, fPid)
+}
+function update_ui(mcurrent_rowid, fPid) {
+	update_relationships(relationships)
+    var roots = []
+	Object.values(components).forEach(function (component) {
+		if (!('_parent' in component)) roots.push(component.SPDXID)
+	})
+	if (roots.length != 1)
+		swal("Error resolving relationships",
+			"Root elements found: " + roots.join(' ') ,
+			"warning")
+	if (roots.length == 0) return
+	var primary = components[roots[0]]
 
   /* Check for child SBOM if not fill the top SBOM*/
   if (mcurrent_rowid == 0) {
@@ -788,11 +807,11 @@ function parse_spdx(spdxin, mcurrent_rowid, primaryOnly, fPid) {
 	check_org()
   }
 
-  var pIndex = 0
-  clen = $(".cmp_table").length
-  for (var i = mcurrent_rowid; i < Object.keys(components).length; i++) {
-    if (i >= clen)
-      add_cmp(mclass)
+  var mclass = ""
+  if (mcurrent_rowid)
+      mclass = "childbom"
+  for (var i = $(".cmp_table").length; i < Object.keys(components).length; i++) {
+    add_cmp(mclass)
   }
   /* SPDXID */
   var cmps = $('#main_table .pcmp_table, #main_table .cmp_table')
@@ -803,7 +822,6 @@ function parse_spdx(spdxin, mcurrent_rowid, primaryOnly, fPid) {
     if (scmps.length > 0)
       fill_component(scmps, component)
   })
-  update_relationships(mcurrent_rowid, relationships)
   if (fPid) {
     /* We have a parent iFrame update the table there with the primary component
     data and show the button */
@@ -837,21 +855,19 @@ function parse_spdx(spdxin, mcurrent_rowid, primaryOnly, fPid) {
       self.parent.window.$('#' + fPid).find(".ExtReferencePayload").html(externalInfo)
   }
 }
-function update_relationships(base, relationships) {
+function update_relationships(relationships) {
 	for (var i = 0; i < relationships.length; i++) {
 		var parts = relationships[i].split(/\s+/)
 		if (parts.length == 3 && !parts[2].startsWith('NO')) {
-		  var c1 = $("table[data-spdxid='" + parts[0] + "']").attr("id")
-		  var c2 = $("table[data-spdxid='" + parts[2] + "']").attr("id")
-		  if (c1 && c2)
-			$('#'+c2).find(".ParentComponent").val(c1)
-		  else 
-			swal("Error resolving relationship",
-			"Cannot resolve " + relationships[i],
-			"warning")
+			if (parts[0] in components && parts[2] in components) {
+				components[parts[2]]._parent = components[parts[0]]
+			}
+			else 
+				swal("Error resolving relationship",
+				"Cannot resolve " + relationships[i],
+				"warning")
 		}
 	}
-  $('[name="PackageName"]').trigger('change')
 }
 function fill_component(xcmps,component) {
 	if('PackageSupplier' in component) {
@@ -873,6 +889,8 @@ function fill_component(xcmps,component) {
 			component.PackageChecksum = data[1].trim()
 		}
 	}
+	if (!(typeof component._parent == 'undefined')) component.ParentComponent = component._parent._index == 0 ? 'PrimaryComponent' : 'Component'+component._parent._index
+
     for(var i=0; i< xcmps.length; i++) {
 		var field = xcmps[i]
 		/* PackageSupplier: $SupplierType: $SupplierName  */
@@ -885,7 +903,6 @@ function fill_component(xcmps,component) {
 		}
 		else 
 			console.log("Skipping field "+field.name+", with value "+field.value)
-
     }
 }
 function update_cmp_names(w) {
