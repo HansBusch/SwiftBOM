@@ -568,7 +568,7 @@ function readFile(input,mchild) {
 		/* Assume Cyclone DX JSON */
 	    }	    
 	    else 
-		parse_spdx(reader.result,mchild,input,false)
+		parse_spdx(reader.result,mchild,false,false)
 	}
 	return
     }
@@ -676,7 +676,9 @@ function do_example() {
     }, 800)
     $('#vuls').removeClass('d-none')
 }
-var khash = {}
+var khash = {} 
+var components = {}	// component by SPDXRef
+var relationships = []
 function parse_spdx(spdxin, mcurrent_rowid, primaryOnly, fPid) {
   if (spdxin == "")
     spdxin = $('#spdxtag').text();
@@ -685,10 +687,11 @@ function parse_spdx(spdxin, mcurrent_rowid, primaryOnly, fPid) {
   if (mcurrent_rowid) {
       mclass = "childbom"
   }
-  khash = {}
-  khash['SPDXID'] = [generate_uuid()]
+  var component = {}
+  var primary = component
   var lines = spdxin.split("\n")
-  var components = -1;
+  var compIndex = Object.keys(components).length - 1
+  var inHeader = 1
   var inText = 0;
   var key = '';
   var val = '';
@@ -698,8 +701,7 @@ function parse_spdx(spdxin, mcurrent_rowid, primaryOnly, fPid) {
 	if (inText) {
 	  if (lines[i].indexOf("</text>") > -1) {
 		inText = 0
-		if (!(key in khash)) khash[key] = []
-		khash[key][components < 0 ? 0 : components] = val
+		component[key] = val
 		continue;
 	  }
 	  val += lines[i] + '\n'
@@ -716,11 +718,24 @@ function parse_spdx(spdxin, mcurrent_rowid, primaryOnly, fPid) {
 		val = '';
 		continue;
 	}
-	if (key == "SPDXID" && components < 0) khash['Document-SPDXID'] = val;
+	if (key == "PackageName") {
+		if (!inHeader) component = {}
+		else if (primaryOnly) break
+		inHeader = 0
+		compIndex++
+		component._index = compIndex
+	}
+	else if (key == "SPDXID") {
+		if (!inHeader) {
+			if (val in components)
+				component = components[val];
+			else
+				components[val] = component
+		}
+	}
     else if (key == "Relationship") {
       if (val.indexOf("CONTAINS") > -1 || val.indexOf("DEPENDS_ON") > -1) {
-        if (!(key in khash)) khash[key] = []
-	    khash[key].push(val)
+	    relationships.push(val)
 	  }
 	  continue;
     }
@@ -733,20 +748,14 @@ function parse_spdx(spdxin, mcurrent_rowid, primaryOnly, fPid) {
 		var items = val.split(' ')
 		if (items.length < 3) continue
 		items.shift()
-		if (!('ExternalRefType' in khash)) khash['ExternalRefType'] = []
-		khash['ExternalRefType'][components] = items.shift().replace('Type','')
+		component.ExternalRefType = items.shift().replace('Type','')
 		val = items.join(' ');
 	}
-	if (key == "PackageName") components++
-    if (!(key in khash)) khash[key] = []
-	khash[key][components < 0 ? 0 : components] = val
+	component[key] = val
   }
   if (inText) 
     add_invalid_feedback(headkeys[0], "Missing text termination")
 
-  /* Remove <text> HTML stuff from Comment */
-  if ('CreatorComment' in khash)
-    khash["CreatorComment"][0] = $('<div>').html(khash["CreatorComment"][0]).text()
   /* Check for child SBOM if not fill the top SBOM*/
   if (mcurrent_rowid == 0) {
     /* Process the head as normal */
@@ -755,71 +764,46 @@ function parse_spdx(spdxin, mcurrent_rowid, primaryOnly, fPid) {
       for (var i = 0; i < headkeys.length; i++) {
         var field = headkeys[i]
 		if (field.name.startsWith('Creator')) {
-			if (khash[field.name] != undefined) {
-				field.value = khash[field.name][0] || ""
-			}
+			field.value = primary[field.name] || ""
 		}
         else {
-			if (!(field.name in khash)) {
+			if (!(field.name in primary)) {
             swal("Data Error", "Data does not contain required field " + field.name, "error")
             add_invalid_feedback(field, "No header data found for " + headkeys[i])
             return false
           }
-          if (khash[field.name].length != 1) {
-            swal("Data Error",
-              "Cardinality error for " + field.name + ", only one value allowed found " +
-              khash[field.name].length + " values", "error")
-            return false
-          }
           if (field.type == "datetime-local") {
             try {
-              field.value = new Date(khash[field.name][0]).toISOString().replace("Z", "")
+              field.value = new Date(primary[field.name]).toISOString().replace("Z", "")
             } catch (err) {
-              console.log("Error when parsing date " + khash[field.name][0] + "XX")
+              console.log("Error when parsing date " + primary[field.name] + "XX")
               field.value = new Date().toISOString().replace("Z", "")
                 add_invalid_feedback(field, "Imported Date was incorrect! Replaced with current date")
                 console.log(err)
             }
           } else
-            field.value = khash[field.name][0] || ""
+            field.value = primary[field.name] || ""
 		}
       }
 	check_org()
   }
 
-  var plen = khash["PackageName"].length
-  /* Create empty array for supplier name and supplier type comes from
-  PackageSupplier: $SupplierType: $SupplierName
-  variables */
-  khash['SupplierType'] = Array(plen).fill("Organization")
-  khash['SupplierName'] = Array(plen)
-  khash['ParentComponent'] = Array(plen).fill("PrimaryComponent")
-  /* Default primary component index is 0, search for DESCRIBES  */
   var pIndex = 0
-  /* Default components to fill starts with 0 unless a child bom is selected */
   clen = $(".cmp_table").length
-  if (mcurrent_rowid) {
-  // add primary plus optionally all dependent
-	  if (primaryOnly) {
-		  plen = 0
-		  khash["Relationship"] = [khash['Relationship'][0] ]
-	  }
-	  else plen += mcurrent_rowid
-  }
-  for (var i = mcurrent_rowid; i < plen; i++) {
+  for (var i = mcurrent_rowid; i < Object.keys(components).length; i++) {
     if (i >= clen)
       add_cmp(mclass)
   }
   /* SPDXID */
   var cmps = $('#main_table .pcmp_table, #main_table .cmp_table')
-  for (var i = 0; i < khash["SPDXID"].length; i++) {
-	var cmp = $(cmps[i+mcurrent_rowid])
-    cmp.attr("data-spdxid", khash["SPDXID"][i])
+  Object.values(components).forEach(function (component)  {
+	var cmp = $(cmps[component._index])
+    cmp.attr("data-spdxid", component.SPDXID)
     var scmps = cmp.find(":input")
-      if (scmps.length > 0)
-        fill_component(scmps, i)
-  }
-  update_relationships(mcurrent_rowid)
+    if (scmps.length > 0)
+      fill_component(scmps, component)
+  })
+  update_relationships(mcurrent_rowid, relationships)
   if (fPid) {
     /* We have a parent iFrame update the table there with the primary component
     data and show the button */
@@ -853,60 +837,52 @@ function parse_spdx(spdxin, mcurrent_rowid, primaryOnly, fPid) {
       self.parent.window.$('#' + fPid).find(".ExtReferencePayload").html(externalInfo)
   }
 }
-function update_relationships(base) {
- if (typeof(khash.Relationship) != "undefined") {
-	var kr = khash["Relationship"]
-	for (var i = 0; i < kr.length; i++) {
-		if (typeof(kr[i]) != "undefined") {
-			var parts = kr[i].split(/\s+/)
-			if (parts.length == 3 && !parts[2].startsWith('NO')) {
-			  var c1 = $("table[data-spdxid='" + parts[0] + "']").attr("id")
-			  var c2 = $("table[data-spdxid='" + parts[2] + "']").attr("id")
-			  if (c1 && c2)
-			  	$('#'+c2).find(".ParentComponent").val(c1)
-			  else 
-			    swal("Error resolving relationship",
-			  	"Cannot resolve " + kr[i],
-			  	"warning")
-			}
+function update_relationships(base, relationships) {
+	for (var i = 0; i < relationships.length; i++) {
+		var parts = relationships[i].split(/\s+/)
+		if (parts.length == 3 && !parts[2].startsWith('NO')) {
+		  var c1 = $("table[data-spdxid='" + parts[0] + "']").attr("id")
+		  var c2 = $("table[data-spdxid='" + parts[2] + "']").attr("id")
+		  if (c1 && c2)
+			$('#'+c2).find(".ParentComponent").val(c1)
+		  else 
+			swal("Error resolving relationship",
+			"Cannot resolve " + relationships[i],
+			"warning")
 		}
 	}
-  }
   $('[name="PackageName"]').trigger('change')
 }
-function fill_component(xcmps,xIndex) {
-	var pack = {}
-	if('PackageSupplier' in khash) {
-	    var supplierdata =  khash['PackageSupplier'][xIndex].split(":")
+function fill_component(xcmps,component) {
+	if('PackageSupplier' in component) {
+	    var supplierdata =  component['PackageSupplier'].split(":")
 	    if(supplierdata.length > 1) {
-		khash['SupplierType'][xIndex] = supplierdata.shift()
-		khash['SupplierName'][xIndex] = supplierdata.join(":")
+		component.SupplierType = supplierdata.shift()
+		component.SupplierName = supplierdata.join(":")
 	    }else
-		khash['SupplierType'][xIndex] = "Organization"
+		component.SupplierType = "Organization"
 	} else {
-	    khash['SupplierType'][xIndex] = ""
-	    khash['SupplierName'][xIndex] = "NOASSERTION"
+	    component.SupplierType = ""
+	    component.SupplierName = "NOASSERTION"
 	}
-	if ('PackageChecksum' in khash && !(typeof khash['PackageChecksum'][xIndex] == 'undefined')) {
-	    var data =  khash['PackageChecksum'][xIndex].split(":")
+	if ('PackageChecksum' in component) {
+	    var data =  component.PackageChecksum.split(":")
 	    if(data.length == 2) {
-			pack.ChecksumType = 'Package'
-			pack.ChecksumAlgorithm = data[0]
-			pack.PackageChecksum = data[1].trim()
+			component.ChecksumType = 'Package'
+			component.ChecksumAlgorithm = data[0]
+			component.PackageChecksum = data[1].trim()
 		}
 	}
     for(var i=0; i< xcmps.length; i++) {
 		var field = xcmps[i]
 		/* PackageSupplier: $SupplierType: $SupplierName  */
-		if(field.name in pack) {
-			field.value = pack[field.name]
+		if(field.name in component) {
+			field.value = component[field.name]
 			if (field.name == 'ChecksumAlgorithm') {
 				checksumtype(field);
 				algvalue(field);
 			}
 		}
-		else if(field.name in khash)
-			field.value = khash[field.name][xIndex] || ""
 		else 
 			console.log("Skipping field "+field.name+", with value "+field.value)
 
