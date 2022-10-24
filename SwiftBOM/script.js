@@ -524,58 +524,62 @@ function OBJtoXML(obj) {
 
 
 function readFile(input,mchild) {
-    if(input.files.length > 1) {
-	swal("Failed!","Upload accepts only one file at a time!","error")
-	return
-    }
-    var file = input.files[0]
-    if(!('name' in file)) {
-	swal("Failed!","Failed to collect file name on upload!","error")
-	return
-    }
-    if (file.name.toLowerCase().endsWith(".xlsx") ||
-	file.name.toLowerCase().endsWith(".xls")) {
-		console.log("Excel")
-		var xl2json = new ExcelToJSON()
-		xl2json.parseExcel(file)
-		swal("Experimental!", "Excel file upload, Please update relationship"+
-			 " before generating SBOM!",
-			 "warning")
-		return
-    }
+	var files = input.files
     var reader = new FileReader()
-    reader.readAsText(file);
-    reader.onload = function() {
-	//console.log(reader.result);
-	//sessionStorage.setItem("reader",reader.result)
-	if(mchild == "childbom") {
-	    var mcurrent_rowid = parseInt($(input).closest('table').prop("id").replace("Component", ""))
-		parse_spdx(reader.result, mcurrent_rowid, $('.cbomfileExternal').is(':checked'), false)
-	    clear_vuls()
-		return
-	} else {
-	    var fnames = file.name.toLowerCase()
-	    if(fnames == "package.json") {
-		return npm_package_json(reader.result)
-	    }
-	    if(fnames.indexOf("requirements") == 0) {
-		return pip_require(reader.result,false)
-	    }
-	    if (fnames.endsWith(".xml")) {
-		/* Assume Cyclone DX or SWID */
-	    }
-	    else if (fnames.endsWith(".json")) {
-		/* Assume Cyclone DX JSON */
-	    }	    
-	    else 
-		parse_spdx(reader.result,mchild,false,false)
+	function readFileEntry(index) {
+		if( index >= files.length ) return;
+		var file = files[index];
+		var file = input.files[index]
+		if(!('name' in file)) {
+			swal("Failed!","Failed to collect file name on upload!","error")
+			return
+		}
+		if (file.name.toLowerCase().endsWith(".xlsx") ||
+		file.name.toLowerCase().endsWith(".xls")) {
+			console.log("Excel")
+			var xl2json = new ExcelToJSON()
+			xl2json.parseExcel(file)
+			swal("Experimental!", "Excel file upload, Please update relationship"+
+				" before generating SBOM!",
+				"warning")
+			return
+		}
+		reader.readAsText(file);
+		reader.onload = function() {
+			if(mchild == "childbom") {
+				var mcurrent_rowid = parseInt($(input).closest('table').prop("id").replace("Component", ""))
+				parse_spdx(reader.result, mcurrent_rowid, $('.cbomfileExternal').is(':checked'), false)
+				clear_vuls()
+				update_ui(mcurrent_rowid, false)
+				return
+			} else {
+				var fnames = file.name.toLowerCase()
+				if(fnames == "package.json") {
+				return npm_package_json(reader.result)
+				}
+				if(fnames.indexOf("requirements") == 0) {
+				return pip_require(reader.result,false)
+				}
+				if (fnames.endsWith(".xml")) {
+				/* Assume Cyclone DX or SWID */
+				}
+				else if (fnames.endsWith(".json")) {
+				/* Assume Cyclone DX JSON */
+				}	    
+				else 
+					parse_spdx(reader.result,mchild,false,false)
+			}
+			if (++index < files.length) readFileEntry(index)
+			else 
+			  update_ui(mchild, false)
+
+		}
+		reader.onerror = function() {
+		console.log(reader.error);
+		swal("File Read Error","File reading as text failed","error")
+		}
 	}
-	return
-    }
-    reader.onerror = function() {
-	console.log(reader.error);
-	swal("File Read Error","File reading as text failed","error")
-    }
+	readFileEntry(0)
 }
 function msgReceiver(info) {
     if(!('data' in info)) {
@@ -725,8 +729,10 @@ function parse_spdx(spdxin, mcurrent_rowid, primaryOnly, fPid) {
 	}
 	else if (key == "SPDXID") {
 		if (!inHeader) {
-			if (val in components)
+			if (val in components) {
 				component = components[val];
+				compIndex--
+			}
 			else
 				components[val] = component
 		}
@@ -759,8 +765,6 @@ function parse_spdx(spdxin, mcurrent_rowid, primaryOnly, fPid) {
 		if (component._index == mcurrent_rowid) component._parent = primary
 	})
   }
-	  component
-  update_ui(mcurrent_rowid, fPid)
 }
 function update_ui(mcurrent_rowid, fPid) {
 	update_relationships(relationships)
@@ -774,6 +778,12 @@ function update_ui(mcurrent_rowid, fPid) {
 			"warning")
 	if (roots.length == 0) return
 	var primary = components[roots[0]]
+	if (primary._index != 0) {
+		Object.values(components).forEach(function (component) {
+			if (component._index < primary._index) component._index++
+		})
+		primary._index = 0
+	}
 
   /* Check for child SBOM if not fill the top SBOM*/
   if (mcurrent_rowid == 0) {
