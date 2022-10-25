@@ -629,8 +629,8 @@ function do_example() {
 		       ChecksumType: "Package",ChecksumAlgorithm: "SHA256",
 		       PackageVersion:"3.0", SupplierName:"Microsoft", SPDXID:"8795cf43-7004-8540-132f-c6a52339c419"},
 		      {PackageName:"SQL 2005 Express", PackageVersion:"9.00.5000.00,SP4",
-		       ChecksumType: "File",ChecksumAlgorithm: "SHA256",		       
-		       FileName: "SQL-2005-Express.msi",PackageChecksum:sha256(Math.random()),
+		       ChecksumType: "Package",ChecksumAlgorithm: "SHA256",		       
+		       PackageFileName: "SQL-2005-Express.msi",PackageChecksum:sha256(Math.random()),
 		       SupplierName:"Microsoft"},
 		      {ParentComponent:"Component1",PackageName:".Net Frame Work",
 		       ChecksumType: "Package",ChecksumAlgorithm: "SHA256",		       
@@ -644,8 +644,8 @@ function do_example() {
 		       PackageFileName: "apache-tomcat-8.5.69.zip",PackageChecksum: sha256(Math.random()),
 		       PackageVersion:"v9.037",SupplierName:"Apache Foundation"},
 		      {ParentComponent:"Component5",PackageName:"Spring Framework",
-		       ChecksumType: "File",ChecksumAlgorithm: "SHA256",		       
-		       FileName: "spring-instrument.jar",PackageChecksum:sha256(Math.random()),   
+		       ChecksumType: "Package",ChecksumAlgorithm: "SHA256",		       
+		       PackageFileName: "spring-instrument.jar",PackageChecksum:sha256(Math.random()),   
 		       PackageVersion:"v4.7",SupplierName:"Apache Foundation"}]
     for(var i=0; i<sample_array.length; i++) {
 	add_cmp()
