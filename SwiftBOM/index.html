@@ -1062,7 +1062,7 @@ Version: <xsl:value-of select="text()"/>
     </xsl:template>
      
     <!-- Suppress items -->
-    <xsl:template match="comment()|spdx:packageVerificationCode"/>
+    <xsl:template match="comment()|spdx:packageVerificationCode|spdx:name"/>
     <xsl:template match="spdx:hasExtractedLicensingInfo"/>
     <xsl:template match="spdx:hasFile"/>
     <xsl:template match="spdx:relationship"/>
