@@ -976,6 +976,106 @@ PackageCopyrightText: $PackageCopyrightText
     <script src="script.js?v=1627694636"></script>
     <input type="file" onchange="readFile(this,false)" style="opacity:0.01" id="spdxload" multiple="multiple">
     <canvas id="canvas" style="display:none"></canvas>
+	<script type='text/xmldata' id='xslt-fromRDF'>
+<xsl:stylesheet xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
+    xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" 
+    xmlns:spdx="http://spdx.org/rdf/terms#" 
+    xmlns:xd="http://www.oxygenxml.com/ns/doc/xsl" version="1.0">
+    <xsl:strip-space  elements="* spdx:created spdx:referenceLocator"/>
+    <xsl:output indent="no" method="text"/>
+
+    <xsl:template match="spdx:versionInfo">
+PackageVersion: <xsl:value-of select="text()"/>
+    </xsl:template>
+
+    <xsl:template match="spdx:licenseListVersion">
+Version: <xsl:value-of select="text()"/>
+    </xsl:template>
+    <xsl:template mode="optional" match="node()">
+        <xsl:if test="(text() != '')">
+            <xsl:variable name="tag" select="local-name()" ></xsl:variable>
+            <xsl:text>&#x0a;</xsl:text><xsl:value-of select="translate(substring($tag, 1, 1), 'abcdefghijklmnopqrstuvwxyz', 'ABCDEFGHIJKLMNOPQRSTUVWXYZ')"/>    
+            <xsl:value-of select="substring($tag, 2)"/>: <xsl:value-of select="text()"/>
+        </xsl:if>
+    </xsl:template>
+    
+    <xsl:template mode="mandatory" match="node()">
+        <xsl:param name="prefix" select="''"/>
+        <xsl:variable name="tag" select="local-name()" ></xsl:variable>
+        <xsl:text>&#x0a;</xsl:text><xsl:value-of select="$prefix"/><xsl:value-of select="translate(substring($tag, 1, 1), 'abcdefghijklmnopqrstuvwxyz', 'ABCDEFGHIJKLMNOPQRSTUVWXYZ')"/>
+        <xsl:value-of select="substring($tag, 2)"/><xsl:text>: </xsl:text> 
+        <xsl:choose>
+            <xsl:when test="contains(text(),'&#10;')">
+                <text>
+                    <xsl:value-of select="text()"/>
+                </text>
+            </xsl:when>
+            <xsl:when test="(text() != '')">
+                <xsl:value-of select="text()"/>
+            </xsl:when>
+            <xsl:when test="contains(@rdf:resource, 'http://spdx.org/licenses')">
+                <xsl:value-of select="substring-after(@rdf:resource, 'http://spdx.org/licenses/')"/>
+            </xsl:when>
+            <xsl:otherwise>
+                <xsl:text>NOASSERTION</xsl:text>
+            </xsl:otherwise>
+        </xsl:choose>
+    </xsl:template>
+
+    <xsl:template match="spdx:Package">
+        <xsl:text>&#x0a;&#x0a;</xsl:text>PackageName: <xsl:value-of select="spdx:name"/>
+        <xsl:text>&#x0a;</xsl:text>SPDXID: <xsl:value-of select="substring-after(@rdf:about, '#')"/>
+    <xsl:apply-templates select="*"/>
+    </xsl:template>
+
+    <xsl:template match="spdx:creator|spdx:created">
+        <xsl:apply-templates select="." mode="mandatory"/>
+    </xsl:template>
+    
+    <xsl:template match="spdx:downloadLocation|spdx:licenseConcluded|spdx:licenseDeclared|spdx:copyrightText">
+        <xsl:apply-templates select="." mode="mandatory">
+            <xsl:with-param name="prefix" select="'Package'"/>
+        </xsl:apply-templates>
+    </xsl:template>
+
+    <xsl:template match="spdx:supplier">
+        <xsl:choose>
+            <xsl:when test="text()='NOASSERTION'">
+                <xsl:text>&#x0a;PackageSupplier: Organization: NOASSERTION</xsl:text>
+            </xsl:when>
+            <xsl:otherwise>
+                <xsl:apply-templates select="." mode="mandatory">
+                    <xsl:with-param name="prefix" select="'Package'"/>
+                </xsl:apply-templates>
+            </xsl:otherwise>
+        </xsl:choose>
+    </xsl:template>
+ 
+    <xsl:template match="spdx:externalRef">
+        <xsl:text>&#x0a;ExternalRef: </xsl:text>
+        <xsl:variable name="type" select="substring-after(spdx:ExternalRef/spdx:referenceType/spdx:ReferenceType/@rdf:about, 'references/')"/>
+        <xsl:choose>
+            <xsl:when test="starts-with($type, 'cpe')"><xsl:text>SECURITY </xsl:text></xsl:when>
+            <xsl:otherwise><xsl:text>PACKAGE </xsl:text></xsl:otherwise>
+        </xsl:choose>
+        <xsl:value-of select="$type"/><xsl:text> </xsl:text><xsl:value-of select="spdx:ExternalRef/spdx:referenceLocator"/>
+    </xsl:template>
+     
+    <!-- Suppress items -->
+    <xsl:template match="comment()|spdx:packageVerificationCode"/>
+    <xsl:template match="spdx:hasExtractedLicensingInfo"/>
+    <xsl:template match="spdx:hasFile"/>
+    <xsl:template match="spdx:relationship"/>
+    
+    <!-- Build SPDX-Lite document -->
+    <xsl:template match="rdf:RDF">
+        <xsl:text>&#x0a;</xsl:text>DocumentName: <xsl:value-of select="spdx:SpdxDocument/spdx:name"/>
+        <xsl:text>&#x0a;</xsl:text>DocumentNamespace: <xsl:value-of select="substring-before(spdx:SpdxDocument/@rdf:about, '#')"/>
+        <xsl:apply-templates select="spdx:SpdxDocument/spdx:creationInfo/spdx:CreationInfo"/>
+        <xsl:apply-templates select="spdx:SpdxDocument/spdx:relationship/spdx:Relationship/spdx:relatedSpdxElement/spdx:Package"/>
+    </xsl:template>
+</xsl:stylesheet>
+	</script>
   </body>
 </html>
 

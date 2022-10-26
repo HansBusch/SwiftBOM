@@ -18,6 +18,9 @@ To start SwiftBOM either download the sources or run it via the following link [
 * The UI can only show a single parent per component. If multiple exist only one will be shown.
 * No support for file level information beyond package file names and their checksums.
 
+### RDF SPDX format
+* Experimental support for files with extension rdf
+
 ### NPM
 * Creator field not filled automatically.
 ### PIP

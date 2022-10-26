@@ -560,6 +560,16 @@ function readFile(input,mchild) {
 				if(fnames.indexOf("requirements") == 0) {
 				return pip_require(reader.result,false)
 				}
+				if (fnames.endsWith(".rdf")) {
+					var xsltProcessor = new XSLTProcessor();
+					const xslNode = document.getElementById("xslt-fromRDF");
+					var xslt = new DOMParser().parseFromString(xslNode.text, 'application/xml')
+					xsltProcessor.importStylesheet(xslt);
+					var rdf = new DOMParser().parseFromString(reader.result, "application/xml");
+					var doc = xsltProcessor.transformToFragment(rdf, document);
+					console.log(doc.textContent)
+					parse_spdx(doc.textContent,mchild,false,false)
+				}
 				if (fnames.endsWith(".xml")) {
 				/* Assume Cyclone DX or SWID */
 				}
