@@ -163,6 +163,12 @@
 		       onclick="pkg_ask('pip')">PIP Package</a>
 		  </div>
 		</div>
+		  &nbsp; 
+		  <button class="btn btn-primary" onclick="generate_spdx()"
+			  data-toggle="tooltip" data-placement="top"
+			  title="Generate SBOM varying formats">		    
+		    Generate SBOM
+		  </button>
 		<br />
 		<div class="tright">
 		  <button class="btn btn-danger" onclick="clearall()">
@@ -757,8 +763,7 @@ $CreatorComment
 PackageName: $PackageName
 SPDXID: $SPDXID
 PackageVersion: $PackageVersion
-PackageSupplier: $SupplierType: $SupplierName 
-$ExternalRef
+PackageSupplier: $SupplierType: $SupplierName $ExternalRef
 Relationship: $Document-SPDXID DESCRIBES $SPDXID
 PackageDownloadLocation: $PackageDownloadLocation
 PackageLicenseConcluded: $PackageLicenseConcluded
@@ -771,8 +776,7 @@ PackageCopyrightText: $PackageCopyrightText
 PackageName: $PackageName
 SPDXID: $SPDXID
 PackageVersion: $PackageVersion
-PackageSupplier: $SupplierType: $SupplierName 
-$ExternalRef
+PackageSupplier: $SupplierType: $SupplierName $ExternalRef
 Relationship: $ParentID CONTAINS $SPDXID
 PackageDownloadLocation: $PackageDownloadLocation
 PackageLicenseConcluded: $PackageLicenseConcluded

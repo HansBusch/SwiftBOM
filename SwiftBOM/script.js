@@ -1,5 +1,5 @@
 /* SBOM-Demo script.js version 5.2.4 ability to export CyconeDX as JSON and Graph as PNG  */
-const _version = '5.2.4'
+const _version = 'B-6.0.0'
 $('#version').html("("+_version+")")
 $('#Created').val((new Date()).toISOString().replace("Z",""))
 /* Internal JSON representation */
@@ -219,6 +219,7 @@ function deepstate(obj,dir) {
 }
 /* Allow these to override URL and other validators */
 var DefaultEmpty = {"NONE":true,"NOASSERTION":true}
+var SpdxOptional = {"ExternalRef":true}
 /* jQuery document.ready equivalent or body onload*/
 $(function () {
     $('[data-toggle="tooltip"]').tooltip()	
@@ -1060,14 +1061,20 @@ function safeSPDX(key, inText) {
 	if (typeof inText === "object") {
 		var txt = ''
 		Object.keys(inText).forEach(function (type) { 
-			if (inText[type].length) txt += key+': '+type+': '+inText[type]+'\n'
+			if (inText[type].length) {
+				if (txt.length) txt += '\n'
+				txt += key+': '+type+': '+inText[type]
+			}
 		})
 		return txt;
 	}
-    inText = inText.trim().replace(/["]/g, '\"')
+    inText = inText.replace(/["]/g, '\"')
+	if (!(key in SpdxOptional)) {
+		inText = inText.trim()
+		if (inText.indexOf('\n') >= 0)
+			inText = "<text>\n"+inText+"\n</text>"
+	}
     if(inText.toUpperCase() in DefaultEmpty) return inText.toUpperCase()
-	if (inText.indexOf('\n') >= 0)
-		inText = "<text>\n"+inText+"\n</text>"
 	return safeXML(inText)
 }
 function validateXML(inXML) {
@@ -1101,12 +1108,12 @@ function spdx_externalRef(hkey)
 	if (!('ExternalRef' in hkey) || exref.length == 0) return []
 	var type = hkey['ExternalRefType']
 	if (type.startsWith('cpe')) {
-		hkey['ExternalRef'] = 'ExternalRef: SECURITY '+type+'Type '+exref
+		hkey['ExternalRef'] = '\nExternalRef: SECURITY '+type+'Type '+exref
 		jref.referenceCategory = 'SECURITY'
 		jref.referenceType = type+'Type'
 	}
 	else {
-		hkey['ExternalRef'] = 'ExternalRef: PACKAGE '+type+' '+exref
+		hkey['ExternalRef'] = '\nExternalRef: PACKAGE '+type+' '+exref
 		jref.referenceCategory = 'PACKAGE'
 		jref.referenceType = type
 	}
