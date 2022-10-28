@@ -1,5 +1,5 @@
 /* SBOM-Demo script.js version 5.2.4 ability to export CyconeDX as JSON and Graph as PNG  */
-const _version = 'B-6.0.0'
+const _version = 'B-6.0.1'
 $('#version').html("("+_version+")")
 $('#Created').val((new Date()).toISOString().replace("Z",""))
 /* Internal JSON representation */
@@ -695,6 +695,7 @@ var khash = {}
 var components = {}	// component by SPDXRef
 var relationships = []
 var primary
+var creator = ''
 function parse_spdx(spdxin, mcurrent_rowid, primaryOnly, fPid) {
   if (spdxin == "")
     spdxin = $('#spdxtag').text();
@@ -755,6 +756,7 @@ function parse_spdx(spdxin, mcurrent_rowid, primaryOnly, fPid) {
 	  continue;
     }
 	else if (key == "Creator") {
+		if (creator == '') creator = val
 	  var items = lines[i].trim().split(':')	
 		key += '-'+line.shift().trim()
 		val = line.join(":").replace(/^\s+/, '')
@@ -794,7 +796,10 @@ function update_ui(mcurrent_rowid, fPid) {
 		var id = 'SPDXRef-'+generate_uuid()
 		primary = components[id] = JSON.parse(JSON.stringify(components[roots[0]]));
 		primary.PackageName ='root'
+		primary.PackageSupplier = creator
 		primary.SPDXID = id
+		primary.PackageVersion = primary.PackageLicenseConcluded = 'NOASSERTION'
+		primary.ExternalRef = null
 		primary._index = Object.keys(components).length
 	}
 	if (primary._index != 0) {
