@@ -783,12 +783,20 @@ function update_ui(mcurrent_rowid, fPid) {
 	Object.values(components).forEach(function (component) {
 		if (!('_parent' in component)) roots.push(component.SPDXID)
 	})
-	if (roots.length != 1)
+	if (roots.length == 0) {
 		swal("Error resolving relationships",
-			"Root elements found: " + roots.join(' ') ,
+			"No Root element found",
 			"warning")
-	if (roots.length == 0) return
+		return
+	}
 	var primary = components[roots[0]]
+	if (roots.length != 1) {
+		var id = 'SPDXRef-'+generate_uuid()
+		primary = components[id] = JSON.parse(JSON.stringify(components[roots[0]]));
+		primary.PackageName ='root'
+		primary.SPDXID = id
+		primary._index = Object.keys(components).length
+	}
 	if (primary._index != 0) {
 		Object.values(components).forEach(function (component) {
 			if (component._index < primary._index) component._index++
