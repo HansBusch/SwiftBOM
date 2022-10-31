@@ -26,6 +26,7 @@
     <script src="jszip.js" async defer></script>
     <script src="xlsx.full.min.js"></script>
     <script src="sha256.js" async defer></script>
+    <script src="licenses.js"></script>
     <link href="magicsuggest-min.css" rel="stylesheet">
     <script src="magicsuggest-min.js" async defer></script>
     <link rel="stylesheet" href="css.css?v=1627592542">
@@ -168,6 +169,13 @@
 			  data-toggle="tooltip" data-placement="top"
 			  title="Generate SBOM varying formats">		    
 		    Generate SBOM
+		  </button>
+		  &nbsp; 
+		  <button class="btn btn-warning"
+			  data-toggle="tooltip" data-placement="top"
+			  title="Check validity of content"
+			  onclick="verify_inputs()">
+		    Verify
 		  </button>
 		<br />
 		<div class="tright">

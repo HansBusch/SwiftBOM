@@ -1,5 +1,5 @@
 /* SBOM-Demo script.js version 5.2.4 ability to export CyconeDX as JSON and Graph as PNG  */
-const _version = 'B-6.0.1'
+const _version = 'B-6.1.0'
 $('#version').html("("+_version+")")
 $('#Created').val((new Date()).toISOString().replace("Z",""))
 /* Internal JSON representation */
@@ -1019,32 +1019,52 @@ function add_valid_feedback(xel,msg) {
     $(xel).after(gdg)
     $(gdg).addClass('valid-feedback').show()
 }
+function verify_licenses() {
+	var lics = {}
+	spdxLicenseIDs.forEach((x, i) => lics[x]=1)
+	$("[name='LicenseID']").each(function() {
+		if (this.value) lics[this.value]=1})
+	lics.NOASSERTION = 0
+		
+	$('#main_table .pcmp_table, #main_table .cmp_table').each(function() {
+		var conc = $(this).find("[name='PackageLicenseConcluded']")
+		var decl = $(this).find("[name='PackageLicenseDeclared']")
+		if (!(decl.val() in lics)) 
+			add_invalid_feedback(decl,"License ID unknown and undefined")
+		else if (!(conc.val() in lics)) 
+			add_invalid_feedback(conc,"License ID unknown and undefined")
+		else if (lics[decl.val()] + lics[conc.val()] == 0)
+			add_invalid_feedback(decl,"Provide one of declared or concluded license")
+  })
+
+}
 function verify_inputs() {
 	clear_invalid_feedback()
 	var ok = true;
     var inputs=$('#main_table :input').not('button')
     for (var i=0; i< inputs.length; i++) {
-	if(!$(inputs[i]).val()) {
-	    if(!$(inputs[i]).hasClass("not_required")) {
-		add_invalid_feedback(inputs[i],"")
-		ok = false
-	    }
-	} else {
-	    if($(inputs[i])[0].type == "datetime-local") {
-		/* Not really necessary but we will do to be safe */
-		if(isNaN(parseInt(new Date($(inputs[i])[0].value).getTime()))) {
-		    add_invalid_feedback(inputs[i],"")
-		    ok = false
+		if(!$(inputs[i]).val()) {
+			if(!$(inputs[i]).hasClass("not_required")) {
+			add_invalid_feedback(inputs[i],"")
+			ok = false
+			}
+		} else {
+			if($(inputs[i])[0].type == "datetime-local") {
+			/* Not really necessary but we will do to be safe */
+			if(isNaN(parseInt(new Date($(inputs[i])[0].value).getTime()))) {
+				add_invalid_feedback(inputs[i],"")
+				ok = false
+			}
+			}
+			else if(!$(inputs[i])[0].checkValidity()) {
+			if($(inputs[i])[0].value.toUpperCase() in DefaultEmpty)
+				return true
+			add_invalid_feedback(inputs[i],"")
+			ok = false
+			}
 		}
-	    }
-	    else if(!$(inputs[i])[0].checkValidity()) {
-		if($(inputs[i])[0].value.toUpperCase() in DefaultEmpty)
-		    return true
-		add_invalid_feedback(inputs[i],"")
-		ok = false
-	    }
-	}
     }
+	verify_licenses()
     return ok
 }
 function safeXML(inText) {
@@ -1155,8 +1175,6 @@ function populate_dependencies(mybomref,componentId) {
 }
 
 function generate_spdx() {
-    if(verify_inputs() == false)
-	return
     /* Clear past vuls */
     if(window.safari) {
 	$('#dlsvg').hide()
