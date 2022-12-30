@@ -1006,9 +1006,14 @@ function add_invalid_feedback(xel,msg) {
     if(msg == "")
 	msg = 'Please provide valid data for '+$(xel).attr('name')
     var err = $('<div>').html(msg)
+	if ($(xel).parent().parent().hasClass('d-none')) {
+		var table = $(xel).closest('.table')
+		vtoggle($(table).find('.detailButton'), 'spdx-lite')
+	}
     $(xel).after(err)
     $(err).addClass('invalid-feedback').show()
     $(xel).focus()
+	return 1
 }
 function add_valid_feedback(xel,msg) {
     $('.invalid-feedback').remove()
@@ -1025,46 +1030,46 @@ function verify_licenses() {
 	$("[name='LicenseID']").each(function() {
 		if (this.value) lics[this.value]=1})
 	lics.NOASSERTION = 0
-		
+	var warnings = 0
 	$('#main_table .pcmp_table, #main_table .cmp_table').each(function() {
 		var conc = $(this).find("[name='PackageLicenseConcluded']")
 		var decl = $(this).find("[name='PackageLicenseDeclared']")
 		if (!(decl.val() in lics)) 
-			add_invalid_feedback(decl,"License ID unknown and undefined")
+			warnings += add_invalid_feedback(decl,"License ID unknown and undefined")
 		else if (!(conc.val() in lics)) 
-			add_invalid_feedback(conc,"License ID unknown and undefined")
+			warnings += add_invalid_feedback(conc,"License ID unknown and undefined")
 		else if (lics[decl.val()] + lics[conc.val()] == 0)
-			add_invalid_feedback(decl,"Provide one of declared or concluded license")
+			warnings += add_invalid_feedback(decl,"Provide one of declared or concluded license")
   })
-
+	return warnings
 }
 function verify_inputs() {
 	clear_invalid_feedback()
 	var ok = true;
     var inputs=$('#main_table :input').not('button')
+	var warnings = 0
     for (var i=0; i< inputs.length; i++) {
 		if(!$(inputs[i]).val()) {
 			if(!$(inputs[i]).hasClass("not_required")) {
-			add_invalid_feedback(inputs[i],"")
-			ok = false
+				warnings += add_invalid_feedback(inputs[i],"")
 			}
 		} else {
 			if($(inputs[i])[0].type == "datetime-local") {
 			/* Not really necessary but we will do to be safe */
-			if(isNaN(parseInt(new Date($(inputs[i])[0].value).getTime()))) {
-				add_invalid_feedback(inputs[i],"")
-				ok = false
-			}
+				if(isNaN(parseInt(new Date($(inputs[i])[0].value).getTime()))) {
+					warnings += add_invalid_feedback(inputs[i],"")
+				}
 			}
 			else if(!$(inputs[i])[0].checkValidity()) {
-			if($(inputs[i])[0].value.toUpperCase() in DefaultEmpty)
-				return true
-			add_invalid_feedback(inputs[i],"")
-			ok = false
+			if(!($(inputs[i])[0].value.toUpperCase() in DefaultEmpty))
+				warnings += add_invalid_feedback(inputs[i],"")
 			}
 		}
     }
-	verify_licenses()
+	warnings += verify_licenses()
+	$('#verify').addClass(warnings ? 'btn-warning' : 'btn-success')
+	$('#verify').removeClass(warnings ? 'btn-success' : 'btn-warning')
+	$('#verify').attr('title', warnings ? ''+warnings+' issues found!' : 'Verify integrity')
     return ok
 }
 function safeXML(inText) {
