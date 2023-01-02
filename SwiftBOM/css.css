@@ -187,10 +187,16 @@ a.circletext.spdx-lite {
     color: #ffffe0 !important;
 }
 	       
-.blackbody input, .blackbody select, .blackbody textarea {
+input.invalid, .invalid select, .invalid textarea {
+    background-color: #400 !important;
+    color: white !important;
+}
+
+.blackbody input:not(.invalid), .blackbody select:not(.invalid), .blackbody textarea:not(.invalid) {
     background-color: #333 !important;
     color: white !important;
 }
+
 .blackbody .coverpage, .blackbody pre {
     background: rgba(3,3,3,0.9);
     color: white;

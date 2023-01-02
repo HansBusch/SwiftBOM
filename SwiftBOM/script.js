@@ -1000,7 +1000,7 @@ function rm_cmp(w) {
 }
 function clear_invalid_feedback() {
     $('.invalid-feedback').remove()
-    $('.valid-feedback').remove()    
+    $('.invalid').removeClass('invalid')
 }
 function add_invalid_feedback(xel,msg) {
     if(msg == "")
@@ -1010,6 +1010,7 @@ function add_invalid_feedback(xel,msg) {
 		var table = $(xel).closest('.table')
 		vtoggle($(table).find('.detailButton'), 'spdx-lite')
 	}
+    $(xel).addClass('invalid')
     $(xel).after(err)
     $(err).addClass('invalid-feedback').show()
     $(xel).focus()
