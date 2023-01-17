@@ -313,7 +313,8 @@
 		      <td>External Reference</td>
 		      <td>
 			  <div class="mline">
-			<select name="ExternalRefType" class="form-control mauto ExternalRefType not_required">
+			<select name="ExternalRefType" class="form-control mauto ExternalRefType not_required" onchange="externalref_change(this)">
+			  <option>none</option>
 			  <option>cpe22</option>
 			  <option>cpe23</option>
 			  <option>purl</option>
@@ -586,7 +587,8 @@
 		  <td>External Reference</td>
 		  <td>
 		  <div class="mline">
-		<select name="ExternalRefType" class="form-control mauto ExternalRefType not_required">
+		<select name="ExternalRefType" class="form-control mauto ExternalRefType not_required" onchange="externalref_change(this)">
+		  <option>none</option>
 		  <option>cpe22</option>
 		  <option>cpe23</option>
 		  <option>purl</option>
@@ -598,7 +600,7 @@
 		</select>
 		<input class="form-control mlast not_required" type="text"
 			   name="ExternalRef" data-required="0"
-			   value=""  placeholder="cpe:&sol;a:acme:infusion:1.0">
+			   value="" placeholder="cpe:&sol;a:acme:infusion:1.0">
 		  </div></td>
 		</tr>
 		    <tr class="ComponentChecksumRow">

@@ -998,6 +998,13 @@ function add_cmp(mclass) {
 function rm_cmp(w) {
     $(w).closest('table').remove()
 }
+var exrefpatterns = { 'bower':'^[^#]+#[^#]+$', 'nuget':'^[A-Za-z0-9\._\-]+\/[0-9\.]+$', 'npm':'^[^@]+@[^@]+$', 'maven': '^[^:]+:[^:]+(:[^:]+)?$', 'cpe22':'[c][pP][eE]:/[AHOaho]?(:[A-Za-z0-9\._\-~%]*){0,6}'};
+function externalref_change(w) {
+	var type = $(w).val();
+	var pattern = '';
+	if (typeof exrefpatterns[type] != "undefined") $(w).siblings().attr('pattern', exrefpatterns[type]);
+	else $(w).siblings().removeAttr('pattern');
+}
 function clear_invalid_feedback() {
     $('.invalid-feedback').remove()
     $('.invalid').removeClass('invalid')
